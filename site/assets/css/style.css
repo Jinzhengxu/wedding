@@ -1,0 +1,618 @@
+@charset "utf-8";
+/* ============================================================================
+   金正旭 · 刘俊懿  婚礼请柬
+   ---------------------------------------------------------------------------
+   三条不可违背的规矩，改这个文件之前先读：
+
+   1. 答案在第二屏。几号、几点、在哪、怎么去、怎么回复，全在 #tie 一张卡里，
+      一屏截得全。留白是「一屏一件事」，不是「少说话」。
+   2. 金只做线。金永远不做填充、不做正文色、不做大色块。
+      金是纸的属性，不是照片的属性 —— 这是防止整页滑向淘宝味的唯一有效纪律。
+   3. 最后一眼必须是红。中式 → 回执 → 留言 → 落款连续四屏红底，不切回纸白。
+
+   禁止项（微信 X5 内核 / 低端安卓上会翻车，逐条都有代价）：
+     position:sticky（全站零处，出血才能安全用 margin-left:calc(50% - 50vw)）
+     backdrop-filter / mix-blend-mode / 大图运行时 filter
+     text-shadow（廉价感第一号征兆）
+     scroll-behavior:smooth（X5 上卡，改自写 rAF）
+     监听 scroll 事件驱动动画（惯性滑动期间回调节流极粗）
+     任何全屏覆盖元素漏写 pointer-events:none（会干掉长按保存图片）
+   ========================================================================== */
+
+:root {
+  color-scheme: only light;
+
+  /* ---- 纸白半页 ---- */
+  --paper:      #F5F3ED;   /* 页面底色。html 与 body 同色，meta theme-color 同值 */
+  --mat:        #FBFAF6;   /* 卡纸白，比 paper 亮约 3%。全部手感来源于这个微差 */
+  --ink:        #1F2A22;   /* 正文与姓名，对 paper 13.3:1 */
+  --ink-2:      #566056;   /* 次墨：图注、副行、标签，对 paper 5.8:1 */
+  --moss:       #2C3F31;   /* 主按钮实底、focus 描边，对 paper 10.0:1 */
+  --gold:       #A9854A;   /* 只用于线。对 paper 仅 3.1:1，永不承载文字 */
+  --gold-soft:  rgba(169,133,74,.34);
+  --line:       rgba(31,42,34,.10);
+
+  /* ---- 礼红半页。--red 取自 P5 底边实测色，让 contain 的接缝看不见 ---- */
+  --red:        #7B0709;
+  --red-top:    #5C0203;   /* P5 顶边实测色，红页背景的渐变起点 */
+  --red-ink:    #F6F1E6;
+  --red-gold:   #D9BE86;
+  --red-line:   rgba(217,190,134,.30);
+
+  --cinnabar:   #9E2B25;   /* 全站唯一一处朱砂：#rsvp 的「已回执」印 */
+  --focus:      #2C3F31;
+
+  --f-serif: 'Serif SC','Songti SC','STSong','Noto Serif CJK SC','SimSun',serif;
+  --f-latin: 'Garamond Web','EB Garamond',Georgia,'Times New Roman',serif;
+  --f-sans:  -apple-system,BlinkMacSystemFont,'PingFang SC','HarmonyOS Sans SC',
+             'Source Han Sans SC','Noto Sans CJK SC','Microsoft YaHei',sans-serif;
+  /* 用户输入内容强制系统栈：子集字体不可能覆盖任意汉字，
+     不显式指定就会在同一段里逐字跳形，比用黑体难看一百倍 */
+  --f-ugc:   var(--f-sans);
+
+  --fs-name:  clamp(2.00rem, 8.4vw, 2.90rem);
+  --fs-h2:    clamp(1.35rem, 5.4vw, 1.70rem);
+  --fs-key:   clamp(1.375rem, 5.6vw, 1.625rem);
+  --fs-addr:  clamp(1.125rem, 4.6vw, 1.25rem);
+  --fs-lead:  clamp(1.125rem, 4.6vw, 1.30rem);
+  --fs-body:  clamp(1.0625rem, 4.4vw, 1.1875rem);
+  --fs-latin: clamp(1.15rem, 4.8vw, 1.45rem);
+  --fs-count: clamp(3.00rem, 14vw, 4.40rem);
+  --fs-note:  .9375rem;
+  --fs-label: .875rem;
+
+  --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  --pad-x:   clamp(20px, 5.6vw, 28px);
+  --sec-gap: clamp(80px, 14vh, 128px);
+  --wrap:    min(100% - var(--pad-x) * 2, 560px);
+
+  --r-card: 3px;
+  --r-btn:  2px;
+  --r-sheet: 12px;
+
+  --sh-card:     0 1px 2px rgba(31,42,34,.05), 0 14px 34px -20px rgba(31,42,34,.22);
+  --sh-card-red: 0 10px 28px -16px rgba(0,0,0,.45);
+
+  --e-out:  cubic-bezier(.22,.61,.36,1);
+  --e-seal: cubic-bezier(.20,.90,.30,1.20);
+  --d-fast: 180ms;
+  --d-base: 280ms;
+  --d-slow: 520ms;
+  --d-ring: 1400ms;
+  --reveal-y: 12px;
+}
+
+/* X5 的「夜间模式」是内核级强制反色，挡不住。能做的是从不依赖 UA 的默认黑白 ——
+   每个背景色和文字色都显式声明过，包括在深色媒体查询里原样再声明一遍。 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper:#F5F3ED; --mat:#FBFAF6; --ink:#1F2A22; --ink-2:#566056;
+    --moss:#2C3F31; --gold:#A9854A; --gold-soft:rgba(169,133,74,.34);
+    --line:rgba(31,42,34,.10);
+    --red:#7B0709; --red-top:#5C0203; --red-ink:#F6F1E6; --red-gold:#D9BE86;
+    --red-line:rgba(217,190,134,.30); --cinnabar:#9E2B25;
+  }
+}
+
+/* --------------------------------------------------------------- 基础 */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { background: #F5F3ED; }   /* 必须同色：微信下拉会露出系统条，色差边必现 */
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  overflow-x: hidden;               /* 出血用 margin-left:calc(50% - 50vw)，配合它才安全 */
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--f-serif);
+  font-size: var(--fs-body);
+  line-height: 1.95;
+  color: var(--ink);
+  font-synthesis: none;             /* 禁止假粗体，X5 会把 400 拉粗成糊字 */
+  line-break: strict;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+img { max-width: 100%; height: auto; display: block; filter: none; -webkit-filter: none; }
+h1, h2, h3, p, figure, blockquote { margin: 0; }
+button { font: inherit; color: inherit; }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(44,63,49,.14);
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.wrap { width: var(--wrap); margin-inline: auto; }
+.nowrap { white-space: nowrap; }
+.sans { font-family: var(--f-sans); }
+.lat  { font-family: var(--f-latin); }
+
+/* EB Garamond 没有等宽数字，逐位锁宽，否则倒计时每分钟抖一下 */
+.tnum > i { font-style: normal; display: inline-block; width: .62em; text-align: center; }
+
+.screen { min-height: 100vh; }
+@supports (height: 100svh) { .screen { min-height: 100svh; } }
+
+/* 金线唯一写法。禁止 height:.5px —— 低端安卓亚像素渲染下会直接消失 */
+.hair { height: 1px; background: var(--gold); opacity: .55; border: 0; margin: 0; }
+@media (-webkit-min-device-pixel-ratio: 2) { .hair { transform: scaleY(.5); } }
+.hair--red { background: var(--red-gold); opacity: .6; }
+.hair--c { width: 40px; margin-inline: auto; }
+
+/* --------------------------------------------------------------- 入场动效
+   HTML 的默认状态 = 动画的终态。初始隐藏只写在 html.js 下。
+   JS 报错、IntersectionObserver 不被支持、脚本被运营商劫持 ——
+   页面依然是完整可读的静态页，绝不白屏。这行门控比全部动效加起来值钱。 */
+.reveal { opacity: 1; transform: none; }
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(var(--reveal-y));
+  transition: opacity var(--d-base) var(--e-out), transform var(--d-base) var(--e-out);
+  transition-delay: var(--d, 0ms);
+}
+html.js .reveal.in { opacity: 1; transform: none; }
+
+/* --------------------------------------------------------------- 图片 */
+.ph { position: relative; overflow: hidden; background: var(--paper); }
+.ph img { width: 100%; height: 100%; object-fit: cover; }
+.ph .lqip {
+  position: absolute; inset: 0; background-size: cover; background-position: center;
+  filter: blur(12px); transform: scale(1.06); pointer-events: none;
+}
+html.js .ph img { opacity: 0; transition: opacity 240ms var(--e-out); }
+html.js .ph img.ready { opacity: 1; }
+
+/* 出血：不用 width:100vw 定位（那会把滚动条宽算进去） */
+.bleed { width: 100vw; margin-left: calc(50% - 50vw); }
+
+.cap {
+  font-family: var(--f-sans); font-size: var(--fs-label); letter-spacing: .16em;
+  color: var(--ink-2); margin-top: 14px; line-height: 1.9;
+}
+
+/* ============================================================ 屏 1 封面 */
+#cover {
+  display: flex; flex-direction: column; justify-content: space-between;
+  /* 底部留出 76px：右下角常驻的音乐圆钮和「点这里开音乐」气泡在那一带，
+     不让开就会压住「星期六 济南 丙午年八月十六」这行 */
+  padding: calc(env(safe-area-inset-top) + 22px) 0 calc(env(safe-area-inset-bottom) + 76px);
+}
+
+.cover-photo { position: relative; }
+.cover-photo .ph { aspect-ratio: 3 / 4; }
+.cover-photo .ph img { object-position: 50% 34%; }
+/* 边缘化开：用 CSS 变量渐变，不烧进图片。以后换底色或换照片不必重导出。 */
+.cover-photo::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to bottom, var(--paper) 0, rgba(245,243,237,0) 18%),
+    linear-gradient(to top,    var(--paper) 0, rgba(245,243,237,0) 16%),
+    linear-gradient(to right,  var(--paper) 0, rgba(245,243,237,0) 11%),
+    linear-gradient(to left,   var(--paper) 0, rgba(245,243,237,0) 11%);
+}
+
+.cover-names {
+  display: flex; flex-direction: row-reverse; align-items: flex-start;
+  justify-content: center; gap: clamp(20px, 6vw, 32px);
+  margin: 0; font-weight: 600;
+}
+.cover-names .col {
+  writing-mode: vertical-rl; text-orientation: upright;
+  font-size: var(--fs-name); letter-spacing: .28em;
+  color: var(--ink); line-height: 1;
+  /* 字距会在最后一个字下面多留一格，抵消掉才是真的居中 */
+  margin-bottom: -.28em;
+}
+.cover-names .rod {
+  width: 1px; align-self: stretch; background: var(--gold); opacity: .5;
+  margin-block: 6px;
+}
+/* 内核不支持竖排时退回横排一行，信息一个字不丢 */
+@supports not (writing-mode: vertical-rl) {
+  .cover-names { flex-direction: row-reverse; align-items: center; }
+  .cover-names .col { writing-mode: horizontal-tb; margin-bottom: 0; }
+  .cover-names .rod { width: 1px; height: 1.2em; align-self: center; }
+}
+
+.cover-foot { text-align: center; padding-inline: var(--pad-x); }
+.cover-foot .date {
+  font-family: var(--f-latin); font-size: var(--fs-latin);
+  letter-spacing: .22em; color: var(--ink); margin-top: 18px;
+}
+.cover-foot .sub {
+  font-size: 1.0625rem; color: var(--ink-2); margin-top: 6px; letter-spacing: .08em;
+}
+.cover-foot .tick {
+  width: 1px; height: 22px; background: var(--gold);
+  margin: 20px auto 0; opacity: .6;
+}
+html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { opacity: .3 } 50% { opacity: .9 } }
+
+/* ==================================================== 屏 2 帖芯（心脏） */
+#tie { padding-bottom: var(--sec-gap); }
+.tie-card {
+  width: var(--wrap); margin-inline: auto;
+  margin-top: calc(-1 * clamp(24px, 5vh, 40px));
+  position: relative; z-index: 2;
+  background: var(--mat);
+  border: 1px solid var(--gold-soft); border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+  padding: 28px 22px 24px; text-align: center;
+}
+.tie-card .k { font-size: var(--fs-key); font-weight: 600; line-height: 1.7; }
+.tie-card .s { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); }
+.tie-card .addr { font-size: var(--fs-addr); color: var(--ink-2); line-height: 1.72; margin-top: 4px; }
+.tie-card .div { height: 1px; background: var(--line); margin: 16px 0; }
+.tie-card .salute { font-size: var(--fs-lead); letter-spacing: .14em; margin-top: 4px; }
+.tie-card .sign {
+  font-family: var(--f-sans); font-size: var(--fs-note);
+  color: var(--ink-2); letter-spacing: .1em; margin-top: 6px;
+}
+.tie-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
+
+/* --------------------------------------------------------------- 按钮 */
+.btn {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 52px; padding: 8px 14px;
+  font-size: 1.0625rem; letter-spacing: .12em; text-decoration: none;
+  border: 1px solid var(--gold-soft); border-radius: var(--r-btn);
+  background: var(--mat); color: var(--ink); cursor: pointer;
+  transition: transform var(--d-fast) var(--e-out), background-color var(--d-fast);
+}
+.btn:active { transform: scale(.985); }
+.btn--solid { background: var(--moss); color: var(--mat); border-color: var(--moss); }
+.btn--wide { width: 100%; min-height: 56px; letter-spacing: .2em; }
+.btn--ghostred { background: transparent; border-color: var(--red-gold); color: var(--red-ink); }
+.btn[aria-disabled='true'], .btn:disabled { opacity: .55; pointer-events: none; }
+
+/* ============================================================ 相册三屏 */
+.plate { margin-top: var(--sec-gap); }
+.plate--narrow .ph { width: 82%; aspect-ratio: 3 / 4; }
+.plate--narrow .cap { width: 82%; }
+.plate--full .ph { aspect-ratio: 3 / 4; }
+
+/* P3 是五张里唯一的横图，就让它做全篇唯一一次出血。
+   呼吸感来自版式变化（窄 → 出血 → 满宽），不来自任何装饰元素。 */
+.plate--bleed .ph { aspect-ratio: 4 / 3; }
+.plate--bleed .ph img { object-position: 64% 32%; }
+@media (min-width: 560px) {
+  .plate--bleed .ph { aspect-ratio: 3 / 2; }
+  .plate--bleed .ph img { object-position: 50% 40%; }
+}
+.plate--bleed .cap { width: var(--wrap); margin-inline: auto; }
+
+/* ======================================================= 屏 6 月相倒计时 */
+#moon { margin-top: var(--sec-gap); text-align: center; }
+.moon-band { position: relative; }
+.moon-band .ph { aspect-ratio: 16 / 9; }
+.moon-band .ph img { object-position: 50% 78%; }   /* P4 第二次裁切：铺地的长头纱 */
+.moon-band::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(245,243,237,0) 0%, rgba(245,243,237,.74) 58%, var(--paper) 100%);
+}
+.moon-ring {
+  position: relative; width: min(56vw, 244px); aspect-ratio: 1;
+  margin: -14% auto 0; z-index: 1;
+}
+.moon-ring svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
+.moon-ring .disc { fill: transparent; transition: fill var(--d-slow) var(--e-out); }
+.moon-ring.full .disc { fill: rgba(169,133,74,.06); }   /* 婚礼当天：真的变成一轮满月 */
+.moon-ring .track { fill: none; stroke: var(--gold-soft); stroke-width: 1; }
+.moon-ring .prog {
+  fill: none; stroke: var(--gold); stroke-width: 1.25; stroke-linecap: butt;
+  transition: stroke-dashoffset var(--d-ring) var(--e-out);
+}
+.moon-ring .mid {
+  position: absolute; inset: 0; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+.moon-ring .num { font-family: var(--f-latin); font-size: var(--fs-count); line-height: 1; }
+.moon-ring .unit { font-size: var(--fs-h2); margin-top: 6px; letter-spacing: .2em; }
+.moon-ring .done { font-size: var(--fs-h2); letter-spacing: .18em; line-height: 1.6; }
+#moon .when { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); margin-top: 18px; }
+#moon .lead { font-size: var(--fs-lead); letter-spacing: .1em; margin-top: 26px; }
+
+/* ============================================================ 屏 7 怎么去
+   这一屏整屏豁免全站的克制原则：字号放大一档、按钮加高、话说全。
+   用户在这里的目标是行动，不是欣赏。 */
+#go { margin-top: var(--sec-gap); }
+#go h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; line-height: 1.55; }
+#go .rule { width: 40px; margin: 12px 0 0; }
+.go-facts { margin-top: 26px; border-block: 1px solid var(--gold-soft); padding: 22px 0; }
+.go-facts .row + .row { margin-top: 24px; }
+.go-facts .lb {
+  font-family: var(--f-sans); font-size: var(--fs-label);
+  letter-spacing: .2em; color: var(--ink-2);
+}
+.go-facts .vl { font-size: var(--fs-key); font-weight: 600; line-height: 1.7; margin-top: 8px; }
+.go-facts .vl.small { font-size: var(--fs-addr); font-weight: 400; }
+
+.go-tel { display: grid; gap: 10px; margin-top: 20px; }
+.go-tel .btn { justify-content: space-between; letter-spacing: .04em; }
+.go-tel .who { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); }
+.go-tel .no { font-family: var(--f-latin); font-size: 1.15rem; letter-spacing: .06em; }
+
+.go-hint {
+  font-family: var(--f-sans); font-size: var(--fs-note);
+  color: var(--ink-2); line-height: 1.85; margin-top: 24px;
+}
+.go-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.go-nav .btn { min-height: 72px; }
+
+#go details { margin-top: 22px; border-top: 1px solid var(--line); }
+#go summary {
+  min-height: 52px; display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; list-style: none; font-size: var(--fs-body);
+}
+#go summary::-webkit-details-marker { display: none; }
+#go summary::after { content: '＋'; color: var(--ink-2); font-family: var(--f-sans); }
+#go details[open] summary::after { content: '－'; }
+#go details .body { padding-bottom: 20px; }
+#go details p { font-size: var(--fs-body); line-height: 1.9; }
+#go details p + p { margin-top: 10px; }
+
+/* ========================================================= 翻页记号
+   一条金线，正中坐一枚细线圆环包着的「囍」，上半在纸白里、下半在礼红里。
+   红是硬切不做渐变（大面积渐变在低端安卓上必出色带），
+   全靠这枚骑在边界上的小图章把两个世界缝在一起。
+   这也是全站唯一一处正经的「囍」。 */
+.turn {
+  margin-top: var(--sec-gap);
+  background: linear-gradient(to bottom, var(--paper) 0 50%, var(--red-top) 50% 100%);
+  height: 96px; position: relative;
+}
+.turn .ln { position: absolute; left: 0; right: 0; top: calc(50% - 1px); }
+.turn .xi {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 54px; height: 54px; border-radius: 50%;
+  border: 1px solid var(--gold); background: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: var(--gold); line-height: 1;
+}
+
+/* ============================================================ 礼红半页 */
+.red {
+  background: var(--red);
+  color: var(--red-ink);
+}
+#rite {
+  background: linear-gradient(to bottom, var(--red-top) 0%, var(--red) 46%);
+  color: var(--red-ink);
+  padding-bottom: var(--sec-gap);
+  position: relative;
+}
+/* P5 用 contain 钉顶：--red 取自照片底边实测色，接缝肉眼不可见，
+   于是右侧那幅书法「婚书」立轴一刀不裁地保住了。婚书是这五张里唯一一件
+   正经中式礼器，裁掉它等于把礼裁掉。 */
+/* 容器比例必须等于照片自身的 2:3。给 3/4 的话，2:3 的竖图在里面会被
+   左右留边，而那两条边的红和照片自己的红对不上，接缝一眼就看得见。
+   等比之后照片满宽铺开，一刀不裁，右上角那幅书法「婚书」完整保住。 */
+#rite .ph { aspect-ratio: 2 / 3; background: transparent; }
+#rite .ph img { object-fit: cover; object-position: 50% 0; }
+.rite-vert {
+  position: absolute; left: clamp(16px, 5vw, 30px); top: 7%;
+  writing-mode: vertical-rl; text-orientation: upright;
+  font-size: var(--fs-h2); letter-spacing: .3em; color: var(--red-ink); line-height: 1;
+}
+.rite-foot { text-align: center; margin-top: 26px; }
+.rite-foot h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; }
+.rite-foot p { font-size: var(--fs-body); color: var(--red-gold); margin-top: 10px; line-height: 1.85; }
+
+/* ---------------------------------------------------- 屏 9/10 红底上的纸
+   表单和留言放在象牙纸上而不是直接压在红底：任意汉字的用户输入 + 深红底，
+   长辈读不清。纸是这份帖子的本体，红是背面。 */
+.sheet {
+  background: var(--mat); color: var(--ink);
+  border-radius: var(--r-card); box-shadow: var(--sh-card-red);
+  padding: 26px 20px;
+}
+#rsvp, #wish { padding-block: var(--sec-gap) 0; }
+#wish { padding-bottom: var(--sec-gap); }
+.red h2.sec { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; color: var(--red-ink); }
+
+.sheet h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; color: var(--ink); }
+.sheet .why { font-size: var(--fs-body); color: var(--ink-2); margin-top: 14px; line-height: 1.85; }
+
+/* --------------------------------------------------------------- 表单 */
+.fld { margin-top: 24px; }
+.fld > .lb {
+  display: block; font-family: var(--f-sans); font-size: var(--fs-label);
+  letter-spacing: .16em; color: var(--ink-2); margin-bottom: 6px;
+}
+.fld .tip { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); margin-top: 8px; }
+input[type=text], input[type=tel], textarea {
+  width: 100%; display: block;
+  font-family: var(--f-ugc); font-size: 17px;  /* <16px 会触发 iOS 聚焦时整页缩放 */
+  color: var(--ink); background: transparent;
+  border: 0; border-bottom: 1px solid var(--gold-soft); border-radius: 0;
+  padding: 12px 2px; min-height: 52px;
+  transition: border-color var(--d-fast);
+  -webkit-appearance: none; appearance: none;
+}
+textarea { min-height: 92px; line-height: 1.8; resize: vertical; }
+input:focus, textarea:focus { outline: 0; border-bottom-color: var(--moss); border-bottom-width: 1px; }
+::placeholder { color: rgba(86,96,86,.55); }
+
+.pick { display: grid; gap: 10px; }
+.pick--2 { grid-template-columns: 1fr 1fr; }
+.pick--3 { grid-template-columns: repeat(3, 1fr); }
+.pick button {
+  min-height: 60px; padding: 6px 4px;
+  font-size: 1.0625rem; letter-spacing: .06em;
+  background: var(--mat); color: var(--ink);
+  border: 1px solid var(--gold-soft); border-radius: var(--r-btn); cursor: pointer;
+  transition: background-color var(--d-fast), border-color var(--d-fast), color var(--d-fast);
+}
+.pick button[aria-checked='true'] { background: var(--moss); border-color: var(--moss); color: var(--mat); }
+/* 「实在抱歉」选中态用次墨而不是红色，别让人有负罪感 */
+.pick button.soft[aria-checked='true'] { background: var(--ink-2); border-color: var(--ink-2); }
+.pick--3 button { min-height: 52px; font-size: 1rem; letter-spacing: 0; }
+
+.step { display: flex; align-items: center; gap: 14px; }
+.step button {
+  width: 52px; height: 52px; flex: none; font-size: 1.35rem; line-height: 1;
+  background: var(--mat); border: 1px solid var(--gold-soft);
+  border-radius: var(--r-btn); color: var(--ink); cursor: pointer;
+}
+.step .n { font-family: var(--f-latin); font-size: 1.5rem; min-width: 2.2ch; text-align: center; }
+
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.msg { font-family: var(--f-sans); font-size: var(--fs-note); line-height: 1.8; margin-top: 14px; }
+.msg--err { color: #9E2B25; }
+.msg--ok { color: var(--moss); }
+
+/* 印章即状态机：长辈认印不认对勾。localStorage 记住，第二天再打开章还在。 */
+.done-box { position: relative; }
+.done-box .ttl { font-size: var(--fs-lead); letter-spacing: .12em; }
+.done-box .sum { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); margin-top: 10px; }
+.done-box .again {
+  margin-top: 18px; background: none; border: 0; padding: 8px 0;
+  font-size: var(--fs-note); font-family: var(--f-sans);
+  color: var(--ink-2); border-bottom: 1px solid var(--gold-soft); cursor: pointer;
+}
+.seal {
+  position: absolute; right: 2px; bottom: 0;
+  width: 54px; height: 54px; border: 1.5px solid var(--cinnabar);
+  border-radius: 3px; color: var(--cinnabar);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; line-height: 1.15; letter-spacing: .02em; text-align: center;
+  transform: rotate(-4deg);
+}
+html.js.motion .seal { animation: stamp 220ms var(--e-seal) both; }
+@keyframes stamp {
+  from { opacity: 0; transform: rotate(-4deg) scale(1.24); }
+  to   { opacity: 1; transform: rotate(-4deg) scale(1); }
+}
+
+/* --------------------------------------------------------------- 留言 */
+.wish-head { display: flex; align-items: baseline; justify-content: space-between; }
+.wish-head .n { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); }
+.wish-lead { font-size: var(--fs-body); color: var(--red-gold); margin-top: 14px; line-height: 1.85; }
+.wish-list { margin-top: 18px; display: grid; gap: 10px; }
+.wish-item {
+  background: var(--mat); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--r-card);
+  box-shadow: var(--sh-card-red); padding: 15px 17px;
+  /* 绝不做 rotate(-.6deg) 的歪贴纸 —— PPT 模板和淘宝详情页的通用语，
+     一出现前面所有的克制立刻作废 */
+}
+.wish-item .top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.wish-item .who { font-family: var(--f-sans); font-size: var(--fs-label); color: var(--ink-2); }
+.wish-item .ago { font-family: var(--f-sans); font-size: var(--fs-label); color: var(--ink-2); flex: none; }
+.wish-item .txt { font-family: var(--f-ugc); font-size: var(--fs-body); line-height: 1.85; margin-top: 8px; }
+.wish-more {
+  display: block; width: 100%; margin-top: 16px; padding: 12px 0;
+  min-height: 44px;                    /* 触控目标下限 */
+  background: none; border: 0; border-bottom: 1px solid var(--red-line);
+  color: var(--red-gold); font-family: var(--f-sans); font-size: var(--fs-note);
+  letter-spacing: .1em; cursor: pointer;
+}
+.wish-empty { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 18px; }
+
+/* 底部升起的写留言面板。背后用纯色遮罩，不用 backdrop-filter（X5 掉帧甚至不渲染） */
+.mask {
+  position: fixed; inset: 0; background: rgba(31,42,34,.42);
+  z-index: 60; opacity: 0; pointer-events: none; transition: opacity var(--d-base);
+}
+.mask.on { opacity: 1; pointer-events: auto; }
+.sheetup {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 61;
+  background: var(--mat); color: var(--ink);
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  padding: 22px var(--pad-x) calc(env(safe-area-inset-bottom) + 20px);
+  transform: translateY(100%); transition: transform 260ms var(--e-out);
+  max-height: 88vh; overflow-y: auto;
+}
+.sheetup.on { transform: none; }
+.sheetup h3 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .16em; margin: 0; }
+.sheetup .count { font-family: var(--f-sans); font-size: var(--fs-label); color: var(--ink-2); text-align: right; margin-top: 6px; }
+
+/* ============================================================ 屏 11 页脚
+   最后一眼是红。不切回纸白 —— 亲戚看完帖子最后一眼是白的，在山东就是失礼。 */
+#foot {
+  text-align: center; padding: var(--sec-gap) var(--pad-x)
+            calc(env(safe-area-inset-bottom) + 76px);   /* 给右下角圆钮让位 */
+}
+#foot .sign { font-size: var(--fs-h2); font-weight: 500; letter-spacing: .22em; margin-top: 30px; }
+#foot .meta { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 14px; }
+#foot .fam  { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 6px; letter-spacing: .1em; }
+#foot .last { font-size: var(--fs-lead); letter-spacing: .18em; margin-top: 26px; }
+#foot .credit { font-family: var(--f-sans); font-size: .75rem; color: rgba(217,190,134,.5); margin-top: 32px; line-height: 1.8; }
+
+/* --------------------------------------------------- 常驻圆钮（全站唯二）
+   不做底部常驻操作条：微信生态里那个位置长期是广告位，长辈不敢点，
+   而且永久遮挡照片 64px。 */
+.dock { position: fixed; right: 16px; z-index: 50; }
+.dock button {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--mat); border: 1px solid var(--gold-soft);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0;
+}
+#music { bottom: calc(env(safe-area-inset-bottom) + 16px); }
+#backtop { bottom: calc(env(safe-area-inset-bottom) + 72px); }
+#backtop { opacity: 0; pointer-events: none; transition: opacity var(--d-base), transform var(--d-base); transform: translateY(6px); }
+#backtop.on { opacity: 1; pointer-events: auto; transform: none; }
+
+.ico-pause { display: flex; gap: 4px; }
+.ico-pause i { width: 2px; height: 12px; background: var(--gold); display: block; }
+.ico-play {
+  width: 0; height: 0; margin-left: 3px;
+  border-left: 9px solid var(--gold);
+  border-top: 6px solid transparent; border-bottom: 6px solid transparent;
+}
+.ico-card { width: 15px; height: 18px; border: 1px solid var(--gold); border-radius: 1px; position: relative; }
+.ico-card::after { content: ''; position: absolute; left: 3px; right: 3px; top: 7px; height: 1px; background: var(--gold); }
+
+.nudge {
+  position: fixed; right: 68px; z-index: 50;
+  bottom: calc(env(safe-area-inset-bottom) + 26px);
+  font-family: var(--f-sans); font-size: var(--fs-label); color: var(--ink-2);
+  background: var(--mat); border: 1px solid var(--gold-soft);
+  border-radius: 999px; padding: 6px 12px; white-space: nowrap;
+  opacity: 0; transform: translateX(6px); transition: opacity 320ms, transform 320ms;
+  pointer-events: none;
+}
+.nudge.on { opacity: 1; transform: none; }
+
+/* ------------------------------------------------------------ 保存喜帖 */
+#keep { margin-top: var(--sec-gap); text-align: center; }
+#keep .card-img {
+  width: min(78%, 320px); margin: 18px auto 0;
+  border: 1px solid var(--red-line); border-radius: var(--r-card);
+}
+#keep p { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 14px; }
+
+/* ===================================================== 降级与无障碍 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
+  /* 关键：只写 animation:none 会让元素永远停在 opacity:0 */
+  html.js .reveal { opacity: 1 !important; transform: none !important; }
+  html.js .ph img { opacity: 1 !important; }
+}
+
+/* 低端安卓：降级后页面的全部价值仍在 —— 版式、色彩、金线、月环终态、
+   红底收尾一样不少，损失的只是入场过渡。 */
+html.lite *, html.lite *::before, html.lite *::after {
+  transition: none !important; animation: none !important;
+}
+html.lite .reveal { opacity: 1 !important; transform: none !important; }
+html.lite .ph img { opacity: 1 !important; }
+html.lite .ph .lqip { filter: none; background: var(--gold-soft); }
+html.lite .tie-card, html.lite .sheet, html.lite .wish-item { box-shadow: none; }
+html.lite .tie-card, html.lite .sheet { border-color: rgba(169,133,74,.55); }

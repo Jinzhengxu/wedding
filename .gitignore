@@ -1,0 +1,11 @@
+# 宾客数据：含姓名、手机号，还有管理后台密钥。绝不能进仓库。
+site/server/data/
+
+# 构建中间产物，由 tools/ 下的脚本生成
+build/
+
+# 工具留下的
+.gstack/
+node_modules/
+*.log
+.DS_Store
