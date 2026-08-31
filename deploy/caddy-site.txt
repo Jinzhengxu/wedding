@@ -1,0 +1,30 @@
+# >>> wedding BEGIN
+# 婚礼邀请函 —— 本段由 deploy/deploy.sh 按上下两行标记【整块】幂等替换，
+# 请不要在 BEGIN / END 之间放别的站点配置，否则重新部署时会被覆盖掉。
+# __DOMAIN__ 是占位符，写入 Caddyfile 时会被替换成 $WEDDING_DOMAIN 的值。
+__DOMAIN__ {
+	# 压缩：zstd 优先，回退 gzip。上游已经压过的内容 Caddy 不会重复压。
+	encode zstd gzip
+
+	reverse_proxy wedding:8080 {
+		# 必须【覆盖】而不是追加。
+		# Caddy 默认把客户端 IP 追加到已有的 X-Forwarded-For 后面，
+		# 而 server.js:91 取的是这个头的第一个值 —— 访客自己发一个
+		# "X-Forwarded-For: 1.2.3.4"，限流（server.js:126）就形同虚设，
+		# 留言墙会被一个人刷满。用 {remote_host} 覆盖掉才是对的。
+		#
+		# 以后若把 Cloudflare 从灰云改成橙云代理，这里要换成
+		#   header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+		# 否则所有访客在服务端看起来都是同一个 Cloudflare 边缘 IP，
+		# 一个亲戚多发两条留言，全家一起被 429。
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Real-IP {remote_host}
+	}
+
+	# 两条零风险的响应头；不加 HSTS，免得以后想换回 http 调试时被浏览器锁死。
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+}
+# <<< wedding END

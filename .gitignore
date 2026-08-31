@@ -9,3 +9,6 @@ build/
 node_modules/
 *.log
 .DS_Store
+
+# deploy.sh 生成，含 CADDY_NETWORK，可能还有 ADMIN_KEY
+.env

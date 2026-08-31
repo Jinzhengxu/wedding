@@ -1,0 +1,74 @@
+# 婚礼邀请函 —— 生产编排
+#
+# 关键约定（和 ~/Music/poker 那套完全一致，别改）：
+#   1. 本服务【不映射任何宿主端口】。宿主的 80/443 属于已经在跑的
+#      matrix-chat-caddy-1，抢占会把 matrix 和德扑一起搞挂。
+#      流量路径：Cloudflare(仅 DNS) -> 宿主 443 -> 已有 Caddy 容器
+#      -> 同一 docker 网络内直连 wedding:8080。
+#   2. 容器内的 8080 和德扑容器的 8080 【不冲突】—— 各自独立的网络命名空间，
+#      Caddy 靠容器名区分：poker:8080 / wedding:8080。不需要改端口。
+#   3. 必须加入 Caddy 所在的那个【已存在的】外部网络，
+#      网络名由 deploy/deploy.sh 探测后写入同目录的 .env（CADDY_NETWORK=xxx）。
+#      手工跑的话：echo 'CADDY_NETWORK=matrix-chat_default' > .env
+#
+# 启动：docker compose up -d --build
+
+services:
+  wedding:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: wedding-invite:latest
+    container_name: wedding
+    restart: unless-stopped
+
+    # 用 docker-init(tini) 当 PID 1：Node 作为 PID 1 时默认信号处理会被忽略，
+    # docker stop 要等满 10s 超时才 SIGKILL；有了 init 能立刻优雅退出。
+    init: true
+
+    environment:
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      TZ: Asia/Shanghai
+      NODE_ENV: production
+
+      # 留空则首次启动自动生成，存进 data 卷的 admin-key.txt（重启不变）。
+      # 想固定成自己记得住的值就在 .env 里写 ADMIN_KEY=xxx。
+      ADMIN_KEY: "${ADMIN_KEY:-}"
+
+      # 设成 1 表示留言先审后发。默认空 = 发出即显示（过敏感词，管理员可随时隐藏）。
+      PREMODERATE: "${PREMODERATE:-}"
+
+    # 故意不写 ports:，见文件头第 1 条。
+    expose:
+      - "8080"
+
+    volumes:
+      # 宾客回执 + 祝福留言 + 管理密钥。不挂卷的话，
+      # 下一次 docker compose up --build 就把所有人的回执抹了。
+      - wedding-data:/app/site/server/data
+
+    networks:
+      - caddy
+
+    # 1GB 小机的硬约束。零依赖静态服务实测 RSS 在 40MB 上下，96m 留足余量。
+    mem_limit: 96m
+    mem_reservation: 32m
+    stop_grace_period: 10s
+
+    # 日志上限 10m x 3 份，防止小机被日志把磁盘/inode 撑爆。
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  wedding-data:
+
+networks:
+  caddy:
+    # external: true 表示这个网络由 matrix-chat 那套 compose 创建，
+    # 我们只是接入，绝不创建也绝不删除它。
+    external: true
+    name: ${CADDY_NETWORK:?未设置 CADDY_NETWORK，请先执行 deploy/deploy.sh，或手工写入 .env}
