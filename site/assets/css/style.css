@@ -338,7 +338,6 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 .moon-ring .unit { font-size: var(--fs-h2); margin-top: 6px; letter-spacing: .2em; }
 .moon-ring .done { font-size: var(--fs-h2); letter-spacing: .18em; line-height: 1.6; }
 #moon .when { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); margin-top: 18px; }
-#moon .lead { font-size: var(--fs-lead); letter-spacing: .1em; margin-top: 26px; }
 
 /* ============================================================ 屏 7 怎么去
    这一屏整屏豁免全站的克制原则：字号放大一档、按钮加高、话说全。
@@ -439,7 +438,8 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 .red h2.sec { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; color: var(--red-ink); }
 
 .sheet h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; color: var(--ink); }
-.sheet .why { font-size: var(--fs-body); color: var(--ink-2); margin-top: 14px; line-height: 1.85; }
+/* 抬头那道 40px 短线之后直接就是第一个输入框，给它一点余地 */
+#rsvpForm { margin-top: 8px; }
 
 /* --------------------------------------------------------------- 表单 */
 .fld { margin-top: 24px; }

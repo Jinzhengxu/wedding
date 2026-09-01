@@ -329,8 +329,6 @@
     if (!doneBox) return;
     form.hidden = true;
     doneBox.hidden = false;
-    // 已经回过话了，就别再催「9 月 15 日前跟我们说一声」
-    var why = $('#rsvpWhy'); if (why) why.hidden = true;
     var bits = [rec.attending === 'no' ? '您选了：恐怕来不了' : '您选了：准时赴宴'];
     if (rec.attending !== 'no' && rec.guests) bits.push('共 ' + rec.guests + ' 位');
     if (rec.side) bits.push(rec.side);
@@ -344,7 +342,6 @@
     $('#rsvpAgain').addEventListener('click', function () {
       doneBox.hidden = true;
       form.hidden = false;
-      var why = $('#rsvpWhy'); if (why) why.hidden = false;
       rsvpMsg.textContent = '';
     });
   }
