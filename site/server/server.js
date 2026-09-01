@@ -35,6 +35,16 @@ const KEY_FILE = path.join(DATA, 'admin-key.txt');
 // 留言是否需要先审核再显示。默认关（发出即可见，但过敏感词 + 管理员可随时隐藏）。
 const PREMODERATE = process.env.PREMODERATE === '1';
 
+// 两场酒席。回执按场次分开统计 —— 混在一起那个「预计到场人数」就是错的，
+// 而它正是拿去跟酒店报桌数的那个数。留言墙相反，两场共用一面墙。
+// 老记录没有 event 字段，一律算婚礼场（回门页上线前只有婚礼这一场）。
+const EVENTS = [
+  { key: 'wedding', label: '婚礼', when: '9.26 星期六 中午', where: '济南美悦云禧 5F 云颂厅' },
+  { key: 'huimen', label: '回门宴', when: '9.12 星期六 17:30', where: '蒙阴天佑园大酒店' },
+];
+const EVENT_KEYS = EVENTS.map((e) => e.key);
+const evOf = (r) => (EVENT_KEYS.includes(r.event) ? r.event : 'wedding');
+
 fs.mkdirSync(DATA, { recursive: true });
 
 // ---------------------------------------------------------------- 管理密钥
@@ -207,9 +217,12 @@ async function handleApi(req, res, url) {
     const phone = clean(body.phone, 20).replace(/[^\d+\- ]/g, '');
     const note = clean(body.note, 200);
 
+    const event = EVENT_KEYS.includes(body.event) ? body.event : 'wedding';
+
     const rec = {
       id: crypto.randomUUID(),
       ts: new Date().toISOString(),
+      event,
       name, attending, guests, side, phone, note,
       ip: crypto.createHash('sha256').update(ip).digest('hex').slice(0, 12), // 只存指纹，不存明文 IP
       ua: clean(req.headers['user-agent'] || '', 160),
@@ -286,33 +299,63 @@ async function handleAdmin(req, res, url) {
   }
 
   const rsvps = await readJsonl(RSVP_FILE);
-  // 同一个名字重复提交时以最后一次为准
+  // 同一个名字重复提交时以最后一次为准。去重的键【必须】带上场次，
+  // 否则同一个亲戚两场都回了，后一条会把前一条顶掉，白少算一场的人数。
   const latest = new Map();
-  for (const r of rsvps) latest.set(r.name + '|' + (r.phone || ''), r);
+  for (const r of rsvps) latest.set(evOf(r) + '|' + r.name + '|' + (r.phone || ''), r);
   const rows = [...latest.values()].sort((a, b) => (a.ts < b.ts ? 1 : -1));
+  const rowsOf = (key) => rows.filter((r) => evOf(r) === key);
 
   // CSV 导出
   if (url.pathname === '/admin/rsvp.csv') {
-    const head = ['提交时间', '称呼', '出席', '人数', '来自', '电话', '留言'];
+    // ?event=huimen 只导那一场；不带参数导全部。「场次」列一直在，
+    // 免得两个文件下到本地混在一起分不清哪个是哪个。
+    const one = EVENTS.find((e) => e.key === url.searchParams.get('event'));
+    const list = one ? rowsOf(one.key) : rows;
+    const head = ['提交时间', '场次', '称呼', '出席', '人数', '来自', '电话', '留言'];
     const lines = [head.join(',')];
-    for (const r of rows) {
+    for (const r of list) {
       lines.push([
         new Date(r.ts).toLocaleString('zh-CN', { hour12: false }),
+        (EVENTS.find((e) => e.key === evOf(r)) || {}).label || '',
         r.name, r.attending === 'yes' ? '出席' : '不能来', r.guests, r.side, r.phone, r.note,
       ].map(csvCell).join(','));
     }
     return send(res, 200, '﻿' + lines.join('\n'), {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="rsvp.csv"',
+      'Content-Disposition': `attachment; filename="rsvp-${one ? one.key : 'all'}.csv"`,
       'Cache-Control': 'no-store',
     });
   }
 
   const wishes = (await currentWishes()).sort((a, b) => (a.ts < b.ts ? 1 : -1));
-  const coming = rows.filter((r) => r.attending === 'yes');
-  const heads = coming.reduce((n, r) => n + (r.guests || 1), 0);
   const t = (iso) => new Date(iso).toLocaleString('zh-CN', { hour12: false });
   const k = encodeURIComponent(ADMIN_KEY);
+
+  // 一场一块：统计 + 名单 + 只导这一场的 CSV。
+  // 「预计到场人数」是拿去跟酒店报桌数的那个数，两场绝不能加在一起。
+  const block = (ev) => {
+    const list = rowsOf(ev.key);
+    const coming = list.filter((r) => r.attending === 'yes');
+    const heads = coming.reduce((n, r) => n + (r.guests || 1), 0);
+    return `
+<h2>${ev.label} <span class="muted" style="font-weight:400">${ev.when} · ${ev.where}</span>
+    <a class="btn" href="/admin/rsvp.csv?key=${k}&amp;event=${ev.key}">导出 CSV</a></h2>
+<div class="stat">
+  <div><b>${coming.length}</b><span>确认出席（份数）</span></div>
+  <div><b>${heads}</b><span>预计到场人数</span></div>
+  <div><b>${list.length - coming.length}</b><span>无法到场</span></div>
+</div>
+<div class="overflow"><table>
+<tr><th>时间</th><th>称呼</th><th>出席</th><th>人数</th><th>来自</th><th>电话</th><th>留言</th></tr>
+${list.length === 0 ? '<tr><td colspan="7" class="muted">还没有人回复</td></tr>' : ''}
+${list.map((r) => `<tr class="${r.attending === 'yes' ? '' : 'no'}">
+<td class="muted">${esc(t(r.ts))}</td><td>${esc(r.name)}</td>
+<td>${r.attending === 'yes' ? '✓ 出席' : '— 不能来'}</td>
+<td>${r.attending === 'yes' ? r.guests : ''}</td>
+<td>${esc(r.side)}</td><td>${esc(r.phone)}</td><td>${esc(r.note)}</td></tr>`).join('\n')}
+</table></div>`;
+  };
 
   const html = `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -336,27 +379,11 @@ async function handleAdmin(req, res, url) {
  .overflow{overflow-x:auto}
 </style></head><body>
 <h1>婚礼后台</h1>
-<div class="muted">金正旭 &amp; 刘俊懿 · 2026.09.26 · 济南美悦云禧 5F 云颂厅</div>
+<div class="muted">金正旭 &amp; 刘俊懿 · 两场酒席分开统计，留言墙共用一面</div>
 
-<div class="stat">
-  <div><b>${coming.length}</b><span>确认出席（份数）</span></div>
-  <div><b>${heads}</b><span>预计到场人数</span></div>
-  <div><b>${rows.length - coming.length}</b><span>无法到场</span></div>
-  <div><b>${wishes.filter((w) => !w.hidden).length}</b><span>祝福留言</span></div>
-</div>
+${EVENTS.map(block).join('\n')}
 
-<h2>宾客回复 <a class="btn" href="/admin/rsvp.csv?key=${k}">导出 CSV</a></h2>
-<div class="overflow"><table>
-<tr><th>时间</th><th>称呼</th><th>出席</th><th>人数</th><th>来自</th><th>电话</th><th>留言</th></tr>
-${rows.length === 0 ? '<tr><td colspan="7" class="muted">还没有人回复</td></tr>' : ''}
-${rows.map((r) => `<tr class="${r.attending === 'yes' ? '' : 'no'}">
-<td class="muted">${esc(t(r.ts))}</td><td>${esc(r.name)}</td>
-<td>${r.attending === 'yes' ? '✓ 出席' : '— 不能来'}</td>
-<td>${r.attending === 'yes' ? r.guests : ''}</td>
-<td>${esc(r.side)}</td><td>${esc(r.phone)}</td><td>${esc(r.note)}</td></tr>`).join('\n')}
-</table></div>
-
-<h2 id="wishes">祝福留言</h2>
+<h2 id="wishes">祝福留言 <span class="muted" style="font-weight:400">两场共用一面墙 · 显示中 ${wishes.filter((w) => !w.hidden && w.approved !== false).length} 条</span></h2>
 <div class="overflow"><table>
 <tr><th>时间</th><th>称呼</th><th>祝福</th><th>状态</th><th></th></tr>
 ${wishes.length === 0 ? '<tr><td colspan="5" class="muted">还没有留言</td></tr>' : ''}

@@ -69,7 +69,29 @@ def build_share():
 
 
 # ------------------------------------------------------------------ 喜帖卡
-def build_card():
+# 地址是【烧进像素】的，所以一场一张。文案跟 tools/events.json 手工对齐 ——
+# 这里没法读 HTML（那边是带标签的富文本，这里要的是纯字符串加字距）。
+# 改了酒店或日期，两边都要改。
+CARDS = [
+    dict(out="invite-card",
+         date="二〇二六年九月二十六日",
+         sub="星期六　农历丙午年八月十六",
+         hour="中午开席",       hour_track=22,
+         fam="金宪举　刘建伟　夫妇　谨订",
+         seat="席设　美悦云禧酒店　5楼云颂厅",
+         addr="山东省济南市槐荫区兴福寺路2660号"),
+    dict(out="invite-card-huimen",
+         date="二〇二六年九月十二日",
+         sub="星期六　农历丙午年八月初二",
+         # 「晚宴 17:30」比「中午开席」窄，字距同样拉到 22 会显得散，收到 16。
+         hour="晚宴 17:30",     hour_track=16,
+         fam="刘树亮　李萍　夫妇　谨订",
+         seat="席设　蒙阴天佑园大酒店",
+         addr="山东省临沂市蒙阴县"),
+]
+
+
+def build_card(c):
     CW, CH = 1080, 1440
     PH = 726                       # 照片区高度
     card = Image.new("RGB", (CW, CH), PAPER)
@@ -102,19 +124,20 @@ def build_card():
     d.rectangle([cx - 1, y + 22, cx, y + 74], fill=GOLD)
     y += 112
 
-    draw_tracked(d, (0, y), "二〇二六年九月二十六日", font(False, 40), INK,
+    draw_tracked(d, (0, y), c["date"], font(False, 40), INK,
                  tracking=6, anchor_center_x=cx)
     y += 58
-    draw_tracked(d, (0, y), "星期六　农历丙午年八月十六", font(False, 28), INK2,
+    draw_tracked(d, (0, y), c["sub"], font(False, 28), INK2,
                  tracking=3, anchor_center_x=cx)
     y += 54
 
     rule(d, cx, y, 600, (0xDF, 0xDB, 0xD0), h=1); y += 28
 
-    # 只写「中午」，不写钟点。四个字放在两条 600px 界线之间会显空，
-    # 所以字号提到 40、字距拉到 22（约 226px），当一枚印记来排。
-    draw_tracked(d, (0, y), "中午开席", font(False, 40), INK,
-                 tracking=22, anchor_center_x=cx)
+    # 婚礼那张只写「中午」不写钟点：四个字放在两条 600px 界线之间会显空，
+    # 所以字号提到 40、字距拉开，当一枚印记来排。
+    # 回门是晚宴，17:30 不像「中午」那样不言自明，钟点必须写出来。
+    draw_tracked(d, (0, y), c["hour"], font(False, 40), INK,
+                 tracking=c["hour_track"], anchor_center_x=cx)
     y += 56
 
     rule(d, cx, y, 600, (0xDF, 0xDB, 0xD0), h=1); y += 30
@@ -122,23 +145,24 @@ def build_card():
     draw_tracked(d, (0, y), "敬备喜筵　恭候光临", font(False, 33), INK,
                  tracking=10, anchor_center_x=cx)
     y += 50
-    # 落款两层：新人「敬邀」，男方双亲「谨订」。多这一行要从上面每一段
-    # 各借几像素，不然会顶到卡底那道 56px 的金线上（见文末 assert）。
+    # 落款两层：新人「敬邀」，设宴一方的双亲「谨订」（婚礼是男方，回门是女方）。
+    # 多这一行要从上面每一段各借几像素，不然会顶到卡底那道 56px 的金线上（见文末 assert）。
     draw_tracked(d, (0, y), "金正旭　刘俊懿　敬邀", font(False, 26), INK2,
                  tracking=6, anchor_center_x=cx)
     y += 42
     # 跟上一行同号同字距。谨订这行 13 个字，26 号带 6px 字距是 410px，
     # 离上面那两条 600px 的界线还远，宽度上没有让它变小的理由。
-    draw_tracked(d, (0, y), "金宪举　刘建伟　夫妇　谨订", font(False, 26), INK2,
+    draw_tracked(d, (0, y), c["fam"], font(False, 26), INK2,
                  tracking=6, anchor_center_x=cx)
     y += 50
 
     # 「席设」收在落款之后 —— 传统请柬的次序。34 号而不是 36 号：
     # 多了「席设」两个字，36 号这一行会宽过上面那两条 600px 的界线。
-    draw_tracked(d, (0, y), "席设　美悦云禧酒店　5楼云颂厅", font(True, 34), INK,
-                 tracking=3, anchor_center_x=cx)
+    sf = font(True, 34)
+    assert text_w(d, c["seat"], sf, 3) < 600, "席设那行宽过界线：%s" % c["seat"]
+    draw_tracked(d, (0, y), c["seat"], sf, INK, tracking=3, anchor_center_x=cx)
     y += 50
-    draw_tracked(d, (0, y), "山东省济南市槐荫区兴福寺路2660号", font(False, 26), INK2,
+    draw_tracked(d, (0, y), c["addr"], font(False, 26), INK2,
                  tracking=2, anchor_center_x=cx)
     y += 38
 
@@ -146,16 +170,17 @@ def build_card():
     assert y < CH - 54, "喜帖卡内容顶到卡底金线：y=%d" % y
     rule(d, cx, CH - 54, 56)
 
-    p = os.path.join(ROOT, "build", "invite-card.png")
+    p = os.path.join(ROOT, "build", c["out"] + ".png")
     card.save(p, "PNG", optimize=True)
-    print("invite-card.png    %6.1f KB  %dx%d" % (os.path.getsize(p) / 1024, CW, CH))
+    print("%-22s %6.1f KB  %dx%d" % (c["out"] + ".png", os.path.getsize(p) / 1024, CW, CH))
 
     # 同时存一份 JPEG，页面上用它（PNG 对照片来说太大）
-    pj = os.path.join(IMG, "invite-card.jpg")
+    pj = os.path.join(IMG, c["out"] + ".jpg")
     card.save(pj, "JPEG", quality=90, optimize=True, progressive=True)
-    print("invite-card.jpg    %6.1f KB" % (os.path.getsize(pj) / 1024))
+    print("%-22s %6.1f KB" % (c["out"] + ".jpg", os.path.getsize(pj) / 1024))
 
 
 if __name__ == "__main__":
     build_share()
-    build_card()
+    for _c in CARDS:
+        build_card(_c)

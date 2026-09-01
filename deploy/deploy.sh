@@ -162,6 +162,18 @@ fi
 # ---------------------------------------------------------------- 部署
 detect
 
+step "校验生成页"
+# site/huimen/index.html 是 tools/build-pages.py 从 site/index.html 生成的。
+# 最容易犯的错是：改了婚礼页的文案、忘了重跑生成、直接 commit 部署 ——
+# 婚礼页更新了，回门页还留着上一版。镜像只 COPY site/，不会替你重新生成。
+if command -v python3 >/dev/null 2>&1 && [ -f tools/build-pages.py ]; then
+  python3 tools/build-pages.py --check \
+    || die "生成页不是最新的。在【本地】跑 python3 tools/build-pages.py && python3 tools/build-fonts.py，提交后再部署。"
+  ok "回门页与婚礼页同步"
+else
+  warn "这台机器没有 python3，跳过生成页校验（本地提交前请自己跑一次 --check）"
+fi
+
 step "构建并启动容器"
 compose up -d --build
 ok "容器已启动"
@@ -196,12 +208,21 @@ fi
 
 step "验证"
 sleep 2
-code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$WEDDING_DOMAIN/" || echo 000)"
-if [ "$code" = "200" ]; then
-  ok "https://$WEDDING_DOMAIN/ → 200"
-else
-  warn "https://$WEDDING_DOMAIN/ 返回 $code"
+# 两场酒席两个页面，都要验。只验首页的话，site/huimen/ 忘了 git add
+# （它是新增的、未跟踪的目录）照样一路绿灯，等亲戚点进去才发现 404。
+bad=0
+for pathq in "/" "/huimen/"; do
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$WEDDING_DOMAIN$pathq" || echo 000)"
+  if [ "$code" = "200" ]; then
+    ok "https://$WEDDING_DOMAIN$pathq → 200"
+  else
+    warn "https://$WEDDING_DOMAIN$pathq 返回 $code"
+    bad=1
+  fi
+done
+if [ "$bad" = "1" ]; then
   warn "首次签证书要几十秒，稍等再试；一直不行看：docker logs --tail 50 $CADDY_CONTAINER"
+  warn "只有 /huimen/ 挂：多半是 site/huimen/ 没提交进 git（新增目录要 git add）"
 fi
 
 step "完成"

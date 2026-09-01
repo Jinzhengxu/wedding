@@ -25,6 +25,12 @@
 
   var $ = function (s, r) { return (r || doc).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
+  var meta = function (n) { var m = $('meta[name="' + n + '"]'); return m ? m.content : ''; };
+
+  // ------------------------------------------------------------ 这是哪一场
+  // 婚礼页和回门页是同一份 HTML 生成的、同一份 JS、同一个域名。
+  // 场次只写在 <meta name="ev-key">，日期只写在 <meta name="ev-at">。
+  var EV = meta('ev-key') || 'wedding';
 
   // ------------------------------------------------------------ 能力判定
   // 不用机型 UA 正则（Redmi [1-8] 这类名单太脆），用真实的能力信号。
@@ -41,6 +47,12 @@
     get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   };
+
+  // 「已回复」的状态必须按场次分开存。两页同域共用一个 localStorage，
+  // 用同一个 key 的话，在婚礼页回复过的亲戚打开回门页会直接看到
+  // 「收到了 · 那天见」—— 他一个字都没回，你在后台也永远等不到这条回执。
+  // 留言墙相反：两页共用同一个 /api/wishes，wish_mine 就不该分场。
+  var RSVP_KEY = 'rsvp_v1_' + EV;
 
   // ------------------------------------------------------------ 入场
   if (!lite && 'IntersectionObserver' in window) {
@@ -75,11 +87,15 @@
   });
 
   // ------------------------------------------------------------ 倒计时 + 月环
-  // 环走满整整一年：2025-09-26 → 2026-09-26，婚礼当天恰好闭合成满月。
-  var WEDDING   = new Date('2026-09-26T12:00:00+08:00').getTime();
-  var DAY_START = new Date('2026-09-26T00:00:00+08:00').getTime();
-  var DAY_END   = new Date('2026-09-27T00:00:00+08:00').getTime();
-  var RING_FROM = new Date('2025-09-26T12:00:00+08:00').getTime();
+  // 日期【只】写在 HTML 的 <meta name="ev-at"> 里。婚礼页和回门页共用这一份 JS，
+  // 从前这四行是写死的 2026-09-26 —— 那样回门页的倒计时会指着婚礼那天。
+  // 环走满整整一年（当天减一年 → 当天），到日子恰好闭合。
+  var AT   = meta('ev-at') || '2026-09-26T12:00:00+08:00';
+  var YMD  = AT.slice(0, 10);                                  // 2026-09-26
+  var EVENT     = new Date(AT).getTime();
+  var DAY_START = new Date(YMD + 'T00:00:00+08:00').getTime();
+  var DAY_END   = DAY_START + 86400000;
+  var RING_FROM = new Date((Number(YMD.slice(0, 4)) - 1) + AT.slice(4)).getTime();
   var CIRC = 289.03;   // 2πr, r = 46
 
   var ring = $('#ring'), prog = $('#ringProg');
@@ -108,7 +124,7 @@
     if (now >= DAY_END) { say('承蒙厚爱\n谢谢诸亲'); return false; }
     if (now >= DAY_START) { say('今日\n花好月圆'); if (ring) ring.classList.add('full'); return false; }
 
-    var left = WEDDING - now;
+    var left = EVENT - now;
     var d = Math.ceil(left / 86400000);
     if (d >= 1) { digits(d); cdUnit.textContent = '天'; }
     else {
@@ -130,7 +146,7 @@
   }
 
   if (prog) {
-    var p = (Date.now() - RING_FROM) / (WEDDING - RING_FROM);
+    var p = (Date.now() - RING_FROM) / (EVENT - RING_FROM);
     p = Math.max(0, Math.min(1, p));
     var draw = function () { prog.style.strokeDashoffset = (CIRC * (1 - p)).toFixed(2); };
     if (lite) { draw(); }
@@ -290,7 +306,9 @@
     $('#rsvpSum').textContent = bits.join(' · ');
   }
 
-  var saved = store.get('rsvp_v1');
+  // 老访客的键没有场次后缀（回门页上线前存的），回落一次，
+  // 免得他们回来看到空表单，以为回执没提交成功又填一遍。
+  var saved = store.get(RSVP_KEY) || (EV === 'wedding' ? store.get('rsvp_v1') : null);
   if (saved) { try { showDone(JSON.parse(saved)); } catch (e) {} }
 
   if ($('#rsvpAgain')) {
@@ -316,6 +334,7 @@
       if (form.website.value) { showDone({ attending: 'yes', guests: 1 }); return; }  // 蜜罐
 
       var rec = {
+        event: EV,
         name: name,
         attending: $('#rGo').value,
         guests: parseInt(rGuests.value, 10) || 1,
@@ -334,7 +353,7 @@
         body: JSON.stringify(rec)
       }).then(function (r) { return r.json(); }).then(function (d) {
         if (!d || !d.ok) throw new Error((d && d.error) || '没发出去，再试一次');
-        store.set('rsvp_v1', JSON.stringify(rec));
+        store.set(RSVP_KEY, JSON.stringify(rec));
         showDone(rec);
       }).catch(function (err) {
         btn.disabled = false;

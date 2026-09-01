@@ -1,5 +1,15 @@
 # 部署到 wedding.ccswitch.online
 
+站点有**两个页面**，同一个容器、同一份 Caddy 配置：
+
+| | 网址 |
+|---|---|
+| 婚礼（9.26 济南美悦云禧） | `https://wedding.ccswitch.online/` |
+| 回门宴（9.12 蒙阴天佑园） | `https://wedding.ccswitch.online/huimen/` |
+
+`/huimen/` 不需要任何 Caddy 或路由配置 —— `server.js` 的静态文件处理见到目录会自动补
+`index.html`。镜像里 `COPY site/` 把它一起带进去。
+
 服务器 107.172.225.199（RackNerd 1GB KVM）上已经跑着两套东西，
 **这份文档的全部前提就是不碰它们**：
 
@@ -39,6 +49,25 @@ WEDDING_DOMAIN=wedding.ccswitch.online bash deploy/deploy.sh
 跑完会打印管理后台地址（带 key）。
 
 DNS 那边保持**灰云（仅 DNS）**即可，Caddy 会自动签证书、自动续期，不用 certbot。
+
+---
+
+## 改完文案要发布时（本地这一步不能省）
+
+回门页 `site/huimen/index.html` 是 `tools/build-pages.py` 从婚礼页生成的，
+**镜像不会替你重新生成**，它只是把 `site/` 原样拷进去。所以本地必须：
+
+```bash
+python3 tools/build-pages.py     # 重新生成回门页
+python3 tools/build-fonts.py     # 新字进子集
+git add -A && git commit -m "..." && git push
+```
+
+`git add -A` 而不是 `git commit -am` —— 新增的文件（比如当初的 `site/huimen/`）
+`-am` 是不会带上的，漏了就是线上 404。
+
+忘了跑生成也没关系：`deploy.sh` 会在构建前跑一次 `build-pages.py --check`，
+不同步就直接中止，不会把半新半旧的两个页面发出去。
 
 ---
 
@@ -144,9 +173,17 @@ Flexible 会和 Caddy 的自动 HTTPS 跳转打架，转成重定向循环。
 
 ```bash
 curl -I https://wedding.ccswitch.online/                         # 200
+curl -I https://wedding.ccswitch.online/huimen/                  # 200 ← 别只验首页
 curl -s https://wedding.ccswitch.online/api/wishes | head -c 120  # {"ok":true,...}
 docker stats --no-stream wedding poker                           # 1GB 小机，看一眼内存
 ```
 
-然后**用手机微信打开一次**。微信 X5 内核和 Chrome 表现不一样，
-字体、音乐引导气泡、三个地图按钮都要在微信里真点一遍。
+`deploy.sh` 的验证步骤两个页面都会 curl 一遍。**只有 `/huimen/` 挂**，
+基本就是 `site/huimen/` 没提交进 git。
+
+然后**用手机微信把两个链接各打开一次**。微信 X5 内核和 Chrome 表现不一样，
+字体、音乐引导气泡、四个地图按钮（两页各两个）都要在微信里真点一遍。
+回门页那两个尤其要点 —— 「天佑园大酒店」的搜索落点没在真机上验证过。
+
+后台 `https://wedding.ccswitch.online/admin?key=...` 会把两场的回执**分开**统计。
+拿去跟酒店报桌数的是各自那块的「预计到场人数」，别把两个数加起来。

@@ -1,48 +1,51 @@
 <!doctype html>
+<!-- ⚠ 这个文件是 tools/build-pages.py 从 site/index.html 生成的，别手改。
+     改文案改 site/index.html，改回门宴专属信息改 tools/events.json，
+     然后跑：python3 tools/build-pages.py && python3 tools/build-fonts.py -->
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#F5F3ED">
 <meta name="color-scheme" content="light">
-<!--ev:title--><title>金正旭 · 刘俊懿 婚礼请柬</title><!--/ev-->
-<!--ev:meta-desc--><meta name="description" content="2026年9月26日 星期六，农历丙午年八月十六，济南美悦云禧酒店五楼云颂厅。敬备喜筵，恭候光临。"><!--/ev-->
+<title>金正旭 · 刘俊懿 回门宴</title>
+<meta name="description" content="2026年9月12日 星期六，农历丙午年八月初二，蒙阴天佑园大酒店。傍晚五点半开席，敬备喜筵，恭候光临。">
 
 <!-- 这两行是页面的「身份」：app.js 靠 ev-at 算倒计时和月环，靠 ev-key 分隔
      localStorage 的已回复状态和回执归属。改日期改这里，不要再去改 JS。 -->
-<!--ev:ident--><meta name="ev-key" content="wedding">
-<meta name="ev-at" content="2026-09-26T12:00:00+08:00"><!--/ev-->
+<meta name="ev-key" content="huimen">
+<meta name="ev-at" content="2026-09-12T17:30:00+08:00">
 <meta name="format-detection" content="telephone=no">
 
 <!-- og: 在微信里不起作用（微信取页面第一张 ≥300×300 的图和 <title>），
      这几行只对非微信浏览器有效。微信的那张图见 <body> 第一行。 -->
 <meta property="og:type" content="website">
-<!--ev:og-title--><meta property="og:title" content="金正旭 · 刘俊懿 婚礼请柬"><!--/ev-->
-<!--ev:og-desc--><meta property="og:description" content="9月26日（农历八月十六），济南美悦云禧酒店。点开看看，记得回我们一声。"><!--/ev-->
+<meta property="og:title" content="金正旭 · 刘俊懿 回门宴">
+<meta property="og:description" content="9月12日（农历八月初二）傍晚，蒙阴天佑园大酒店。点开看看，记得回我们一声。">
 <!-- og:image / og:url 必须是绝对地址：抓取方（Telegram、飞书、Twitter）
      不一定带着页面 URL 去解析相对路径，写相对路径它们就抓不到图。 -->
-<!--ev:og-url--><meta property="og:url" content="https://wedding.ccswitch.online/"><!--/ev-->
+<meta property="og:url" content="https://wedding.ccswitch.online/huimen/">
 <meta property="og:image" content="https://wedding.ccswitch.online/assets/img/og-1200x630.jpg">
 
-<link rel="icon" href="assets/img/share-400.jpg">
-<link rel="preload" href="assets/fonts/serif-sc.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="/assets/img/share-400.jpg">
+<link rel="preload" href="/assets/fonts/serif-sc.woff2" as="font" type="font/woff2" crossorigin>
 <!-- preload 必须带上 imagesrcset/imagesizes，否则浏览器按 srcset 另选一档，
      预载的那张白下（375px 屏在 DPR1 下选的是 480w，不是 750w）。 -->
 <link rel="preload" as="image" fetchpriority="high"
-      imagesrcset="assets/img/p1-vow-480.webp 480w,
-                   assets/img/p1-vow-750.webp 750w,
-                   assets/img/p1-vow-1080.webp 1080w"
-      imagesizes="100vw" href="assets/img/p1-vow-750.webp">
-<link rel="stylesheet" href="assets/fonts/fonts.css">
-<link rel="stylesheet" href="assets/css/lqip.css">
-<link rel="stylesheet" href="assets/css/style.css">
+      imagesrcset="/assets/img/p1-vow-480.webp 480w,
+                   /assets/img/p1-vow-750.webp 750w,
+                   /assets/img/p1-vow-1080.webp 1080w"
+      imagesizes="100vw" href="/assets/img/p1-vow-750.webp">
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+<link rel="stylesheet" href="/assets/css/lqip.css">
+<link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 
 <!-- 微信取页面里第一张 ≥300×300 的图当分享缩略图。
      用 P5 中式红：第一眼有喜气，白纱的反差留给点进来之后。
      必须保持被渲染（只是移出视口），display:none 会被跳过。 -->
-<img class="hp" src="assets/img/share-400.jpg" width="400" height="400"
+<img class="hp" src="/assets/img/share-400.jpg" width="400" height="400"
      alt="金正旭与刘俊懿" aria-hidden="true">
 
 <main>
@@ -53,11 +56,11 @@
     <div class="ph lq-p1-vow">
       <picture>
         <source type="image/webp"
-                srcset="assets/img/p1-vow-480.webp 480w,
-                        assets/img/p1-vow-750.webp 750w,
-                        assets/img/p1-vow-1080.webp 1080w"
+                srcset="/assets/img/p1-vow-480.webp 480w,
+                        /assets/img/p1-vow-750.webp 750w,
+                        /assets/img/p1-vow-1080.webp 1080w"
                 sizes="100vw">
-        <img src="assets/img/p1-vow-750.jpg" width="750" height="1125"
+        <img src="/assets/img/p1-vow-750.jpg" width="750" height="1125"
              alt="金正旭与刘俊懿额头相抵，共捧一束白色马蹄莲"
              fetchpriority="high" decoding="async">
       </picture>
@@ -76,8 +79,8 @@
       <span class="col">刘俊懿</span>
     </h1>
     <div class="hair hair--c" style="width:56px;margin-top:26px" aria-hidden="true"></div>
-    <div class="date"><!--ev:cover-date-->2026.09.26<!--/ev--></div>
-    <div class="sub"><!--ev:cover-sub-->星期六　济南　丙午年八月十六<!--/ev--></div>
+    <div class="date">2026.09.12</div>
+    <div class="sub">星期六　蒙阴　丙午年八月初二</div>
     <div class="tick" aria-hidden="true"></div>
   </div>
 </section>
@@ -89,11 +92,11 @@
 <section id="tie">
   <div class="tie-card reveal">
     <div class="hair hair--c" aria-hidden="true"></div>
-    <p class="k" style="margin-top:18px"><!--ev:tie-date-->二〇二六年九月二十六日<!--/ev--></p>
-    <p class="s"><!--ev:tie-sub-->星期六　农历丙午年八月十六<!--/ev--></p>
+    <p class="k" style="margin-top:18px">二〇二六年九月十二日</p>
+    <p class="s">星期六　农历丙午年八月初二</p>
 
     <div class="div" aria-hidden="true"></div>
-    <p class="k hour"><!--ev:hour-->中午开席<!--/ev--></p>
+    <p class="k hour">晚宴 <span class="lat">17:30</span></p>
 
     <div class="hair hair--c" style="margin-top:22px" aria-hidden="true"></div>
     <p class="salute" style="margin-top:20px">敬备喜筵　恭候光临</p>
@@ -101,14 +104,14 @@
     <!-- 设宴那一方的双亲（婚礼页是男方，回门页由 events.json 换成女方）。
          「谨订」是长辈设宴的落款用词，跟新人的「敬邀」分成两层，这样一张帖上
          既有主人也有新人，不必再写「男方父母」四个字来标注。 -->
-    <p class="fam"><!--ev:fam-->金宪举　刘建伟　夫妇　谨订<!--/ev--></p>
+    <p class="fam">刘树亮　李萍　夫妇　谨订</p>
 
     <!-- 「席设」压在落款之后 —— 传统请柬的次序：先说日子、再敬邀，
          最后才落到席面摆在哪儿。地点是最后一句，不是中间一栏。 -->
     <div class="div" style="margin-top:20px" aria-hidden="true"></div>
     <p class="seat">席设</p>
-    <p class="k"><!--ev:tie-venue--><span class="nowrap">美悦云禧酒店</span>　<span class="nowrap">5楼 云颂厅</span><!--/ev--></p>
-    <p class="addr"><!--ev:tie-addr-->山东省济南市槐荫区<span class="nowrap">兴福寺路2660号</span><!--/ev--></p>
+    <p class="k"><span class="nowrap">蒙阴天佑园大酒店</span></p>
+    <p class="addr">山东省临沂市<span class="nowrap">蒙阴县</span></p>
 
     <div class="tie-acts">
       <a class="btn" href="#go">怎么去</a>
@@ -124,9 +127,9 @@
   <div class="ph lq-p2-studio">
     <picture>
       <source type="image/webp"
-              srcset="assets/img/p2-studio-480.webp 480w, assets/img/p2-studio-750.webp 750w"
+              srcset="/assets/img/p2-studio-480.webp 480w, /assets/img/p2-studio-750.webp 750w"
               sizes="(min-width:560px) 460px, 82vw">
-      <img src="assets/img/p2-studio-750.jpg" width="750" height="1125"
+      <img src="/assets/img/p2-studio-750.jpg" width="750" height="1125"
            alt="灰墙前的全身合影，新娘白缎大拖尾婚纱" loading="lazy" decoding="async">
     </picture>
   </div>
@@ -137,9 +140,9 @@
   <div class="ph bleed lq-p3-close">
     <picture>
       <source type="image/webp"
-              srcset="assets/img/p3-close-750.webp 750w, assets/img/p3-close-1080.webp 1080w"
+              srcset="/assets/img/p3-close-750.webp 750w, /assets/img/p3-close-1080.webp 1080w"
               sizes="100vw">
-      <img src="assets/img/p3-close-750.jpg" width="750" height="500"
+      <img src="/assets/img/p3-close-750.jpg" width="750" height="500"
            alt="半身特写，前景是垂坠的绿蕨与白玫瑰捧花" loading="lazy" decoding="async">
     </picture>
   </div>
@@ -150,9 +153,9 @@
   <div class="ph lq-p4-arch">
     <picture>
       <source type="image/webp"
-              srcset="assets/img/p4-arch-480.webp 480w, assets/img/p4-arch-750.webp 750w"
+              srcset="/assets/img/p4-arch-480.webp 480w, /assets/img/p4-arch-750.webp 750w"
               sizes="(min-width:560px) 560px, 100vw">
-      <img src="assets/img/p4-arch-750.jpg" width="750" height="1125"
+      <img src="/assets/img/p4-arch-750.jpg" width="750" height="1125"
            alt="户外白色尖拱门下的合影，超长头纱铺在草地上"
            style="object-position:50% 30%" loading="lazy" decoding="async">
     </picture>
@@ -170,8 +173,8 @@
          这次取铺地的长头纱 —— 月亮挂在纱上。 -->
     <div class="ph lq-p4-arch">
       <picture>
-        <source type="image/webp" srcset="assets/img/p4-arch-750.webp" sizes="100vw">
-        <img src="assets/img/p4-arch-750.jpg" width="750" height="422"
+        <source type="image/webp" srcset="/assets/img/p4-arch-750.webp" sizes="100vw">
+        <img src="/assets/img/p4-arch-750.jpg" width="750" height="422"
              alt="" aria-hidden="true" loading="lazy" decoding="async">
       </picture>
     </div>
@@ -190,8 +193,8 @@
     </div>
   </div>
 
-  <p class="sr-only" id="cdSr"><!--ev:moon-sr-->婚礼日期：2026年9月26日 星期六 中午开席。<!--/ev--></p>
-  <p class="when wrap"><!--ev:moon-when-->二〇二六年九月二十六日　中午开席<!--/ev--></p>
+  <p class="sr-only" id="cdSr">回门宴日期：2026年9月12日 星期六 傍晚5点30分开席。</p>
+  <p class="when wrap">二〇二六年九月十二日　晚宴 <span class="lat">17:30</span></p>
 </section>
 
 
@@ -203,39 +206,26 @@
   <div class="go-facts reveal">
     <div class="row">
       <div class="lb">时间</div>
-      <div class="vl"><!--ev:go-time--><span class="lat">9.26</span> 星期六　中午开席<!--/ev--></div>
+      <div class="vl"><span class="lat">9.12</span> 星期六　晚宴 <span class="lat">17:30</span></div>
     </div>
     <div class="row">
       <div class="lb">地点</div>
-      <div class="vl"><!--ev:go-venue--><span class="nowrap">美悦云禧酒店</span>　<span class="nowrap">5楼 云颂厅</span><!--/ev--></div>
+      <div class="vl"><span class="nowrap">蒙阴天佑园大酒店</span></div>
     </div>
     <div class="row">
       <div class="lb">地址</div>
-      <div class="vl small"><!--ev:go-addr-->山东省济南市槐荫区兴福寺路2660号<!--/ev--></div>
+      <div class="vl small">山东省临沂市蒙阴县</div>
     </div>
   </div>
 
-  <!--ev:go-tel--><div class="go-tel reveal">
-    <a class="btn" href="tel:053188590967">
-      <span class="who">酒店前台</span>
-      <span class="no lat">0531-88590967</span>
-    </a>
-    <!-- ▼▼ 待填：新人或伴郎的手机号。把下面三行的注释去掉，换成真号码即可。
-         长辈提前到了、走岔了、找不到云颂厅，得有个人能打。
-    <a class="btn" href="tel:13800000000">
-      <span class="who">新郎 金正旭</span>
-      <span class="no lat">138 0000 0000</span>
-    </a>
-    ▲▲ -->
-  </div>
-<!--/ev-->
+  
   <p class="go-hint reveal">点下面的按钮，微信会问一句要不要跳转，点「继续」就行。</p>
 
   <div class="go-nav reveal">
-    <!--ev:go-nav--><a class="btn" id="navAmap" href="https://uri.amap.com/search?keyword=%E7%BE%8E%E6%82%A6%E4%BA%91%E7%A6%A7%E9%85%92%E5%BA%97&amp;city=%E6%B5%8E%E5%8D%97&amp;view=map&amp;src=wedding"
+    <a class="btn" id="navAmap" href="https://uri.amap.com/search?keyword=%E5%A4%A9%E4%BD%91%E5%9B%AD%E5%A4%A7%E9%85%92%E5%BA%97&amp;city=%E8%92%99%E9%98%B4&amp;view=map&amp;src=wedding"
        target="_blank" rel="noopener">高德地图</a>
-    <a class="btn" id="navBaidu" href="https://api.map.baidu.com/geocoder?address=%E5%B1%B1%E4%B8%9C%E7%9C%81%E6%B5%8E%E5%8D%97%E5%B8%82%E6%A7%90%E8%8D%AB%E5%8C%BA%E5%85%B4%E7%A6%8F%E5%AF%BA%E8%B7%AF2660%E5%8F%B7&amp;output=html&amp;src=wedding"
-       target="_blank" rel="noopener">百度地图</a><!--/ev-->
+    <a class="btn" id="navBaidu" href="https://api.map.baidu.com/geocoder?address=%E5%B1%B1%E4%B8%9C%E7%9C%81%E4%B8%B4%E6%B2%82%E5%B8%82%E8%92%99%E9%98%B4%E5%8E%BF%E5%A4%A9%E4%BD%91%E5%9B%AD%E5%A4%A7%E9%85%92%E5%BA%97&amp;output=html&amp;src=wedding"
+       target="_blank" rel="noopener">百度地图</a>
   </div>
 </section>
 
@@ -255,9 +245,9 @@
   <div class="ph lq-p5-red">
     <picture>
       <source type="image/webp"
-              srcset="assets/img/p5-red-750.webp 750w, assets/img/p5-red-1080.webp 1080w"
+              srcset="/assets/img/p5-red-750.webp 750w, /assets/img/p5-red-1080.webp 1080w"
               sizes="100vw">
-      <img src="assets/img/p5-red-750.jpg" width="750" height="1125"
+      <img src="/assets/img/p5-red-750.jpg" width="750" height="1125"
            alt="金正旭与刘俊懿身着中式礼服，身旁是书法婚书立轴"
            loading="lazy" decoding="async">
     </picture>
@@ -277,8 +267,8 @@
     <div class="sheet reveal">
       <h2>敬请回复</h2>
       <div class="hair rule" style="width:40px;margin-top:12px" aria-hidden="true"></div>
-      <p class="why" id="rsvpWhy"><!--ev:rsvp-why-->席位要提前排，人数也提前定。请亲朋好友在
-         <span class="nowrap">9 月 15 日</span>前，给我们回个信息。期待您的莅临。<!--/ev--></p>
+      <p class="why" id="rsvpWhy">席位要提前排，人数也提前定。请亲朋好友在
+         <span class="nowrap">9 月 5 日</span>前，给我们回个信息。期待您的莅临。</p>
 
       <form id="rsvpForm" action="/api/rsvp" method="post" novalidate>
         <div class="fld">
@@ -372,9 +362,9 @@
 <section id="keep" class="red">
   <div class="wrap">
     <h2 class="sec reveal">存下这张喜帖</h2>
-    <!--ev:card-img--><img class="card-img reveal" src="assets/img/invite-card.jpg"
+    <img class="card-img reveal" src="/assets/img/invite-card-huimen.jpg"
          width="1080" height="1440" loading="lazy" decoding="async"
-         alt="金正旭与刘俊懿的婚礼请柬，二〇二六年九月二十六日，济南美悦云禧酒店五楼云颂厅"><!--/ev-->
+         alt="金正旭与刘俊懿的回门宴请柬，二〇二六年九月十二日，蒙阴天佑园大酒店">
     <p class="reveal">长按上面这张图，保存到相册</p>
   </div>
 </section>
@@ -389,8 +379,8 @@
   <!-- ▼ 待填：女方双亲的名字。拿到后写成
        「金宪举　刘建伟　　刘××　×××　夫妇　谨订」，两组之间空两格。
        现在只落男方，是因为这一版按男方发帖办；两家合发就得把女方补齐。 -->
-  <p class="fam"><!--ev:fam-->金宪举　刘建伟　夫妇　谨订<!--/ev--></p>
-  <p class="meta"><!--ev:foot-meta-->二〇二六年九月二十六日　·　山东济南<!--/ev--></p>
+  <p class="fam">刘树亮　李萍　夫妇　谨订</p>
+  <p class="meta">二〇二六年九月十二日　·　山东蒙阴</p>
   <p class="last">恭候诸亲光临</p>
   <div class="hair hair--red hair--c" style="width:20px;margin-top:30px" aria-hidden="true"></div>
   <p class="credit">背景音乐 Air on the G String（BWV 1068）<br>
@@ -413,7 +403,7 @@
 </div>
 <div class="nudge" id="nudge" aria-hidden="true">点这里，听点音乐</div>
 
-<audio id="bgm" src="assets/audio/bgm.mp3" preload="none" loop></audio>
+<audio id="bgm" src="/assets/audio/bgm.mp3" preload="none" loop></audio>
 
 
 <!-- ---------------------------------------------------- 写留言面板 -->
@@ -440,6 +430,6 @@
   </form>
 </div>
 
-<script src="assets/js/app.js" defer></script>
+<script src="/assets/js/app.js" defer></script>
 </body>
 </html>

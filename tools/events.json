@@ -1,0 +1,49 @@
+{
+  "_注": [
+    "这个文件只放【回门宴】跟婚礼页不一样的地方。婚礼页就是 site/index.html 本身，",
+    "手改它即可，不需要在这里写一份。改完跑：python3 tools/build-pages.py",
+    "键名对应 index.html 里的 <!--ev:键名--> … <!--/ev--> 标记。",
+    "少一个键或多一个键，构建都会直接报错退出，不会悄悄生成一张错帖。"
+  ],
+
+  "huimen": {
+    "_out": "site/huimen/index.html",
+
+    "title": "<title>金正旭 · 刘俊懿 回门宴</title>",
+
+    "meta-desc": "<meta name=\"description\" content=\"2026年9月12日 星期六，农历丙午年八月初二，蒙阴天佑园大酒店。傍晚五点半开席，敬备喜筵，恭候光临。\">",
+
+    "ident": "<meta name=\"ev-key\" content=\"huimen\">\n<meta name=\"ev-at\" content=\"2026-09-12T17:30:00+08:00\">",
+
+    "og-title": "<meta property=\"og:title\" content=\"金正旭 · 刘俊懿 回门宴\">",
+    "og-desc": "<meta property=\"og:description\" content=\"9月12日（农历八月初二）傍晚，蒙阴天佑园大酒店。点开看看，记得回我们一声。\">",
+    "og-url": "<meta property=\"og:url\" content=\"https://wedding.ccswitch.online/huimen/\">",
+
+    "cover-date": "2026.09.12",
+    "cover-sub": "星期六　蒙阴　丙午年八月初二",
+
+    "tie-date": "二〇二六年九月十二日",
+    "tie-sub": "星期六　农历丙午年八月初二",
+    "hour": "晚宴 <span class=\"lat\">17:30</span>",
+    "fam": "刘树亮　李萍　夫妇　谨订",
+    "tie-venue": "<span class=\"nowrap\">蒙阴天佑园大酒店</span>",
+    "tie-addr": "山东省临沂市<span class=\"nowrap\">蒙阴县</span>",
+
+    "moon-sr": "回门宴日期：2026年9月12日 星期六 傍晚5点30分开席。",
+    "moon-when": "二〇二六年九月十二日　晚宴 <span class=\"lat\">17:30</span>",
+
+    "go-time": "<span class=\"lat\">9.12</span> 星期六　晚宴 <span class=\"lat\">17:30</span>",
+    "go-venue": "<span class=\"nowrap\">蒙阴天佑园大酒店</span>",
+    "go-addr": "山东省临沂市蒙阴县",
+
+    "go-tel": "",
+
+    "go-nav": "<a class=\"btn\" id=\"navAmap\" href=\"https://uri.amap.com/search?keyword=%E5%A4%A9%E4%BD%91%E5%9B%AD%E5%A4%A7%E9%85%92%E5%BA%97&amp;city=%E8%92%99%E9%98%B4&amp;view=map&amp;src=wedding\"\n       target=\"_blank\" rel=\"noopener\">高德地图</a>\n    <a class=\"btn\" id=\"navBaidu\" href=\"https://api.map.baidu.com/geocoder?address=%E5%B1%B1%E4%B8%9C%E7%9C%81%E4%B8%B4%E6%B2%82%E5%B8%82%E8%92%99%E9%98%B4%E5%8E%BF%E5%A4%A9%E4%BD%91%E5%9B%AD%E5%A4%A7%E9%85%92%E5%BA%97&amp;output=html&amp;src=wedding\"\n       target=\"_blank\" rel=\"noopener\">百度地图</a>",
+
+    "rsvp-why": "席位要提前排，人数也提前定。请亲朋好友在\n         <span class=\"nowrap\">9 月 5 日</span>前，给我们回个信息。期待您的莅临。",
+
+    "card-img": "<img class=\"card-img reveal\" src=\"assets/img/invite-card-huimen.jpg\"\n         width=\"1080\" height=\"1440\" loading=\"lazy\" decoding=\"async\"\n         alt=\"金正旭与刘俊懿的回门宴请柬，二〇二六年九月十二日，蒙阴天佑园大酒店\">",
+
+    "foot-meta": "二〇二六年九月十二日　·　山东蒙阴"
+  }
+}
