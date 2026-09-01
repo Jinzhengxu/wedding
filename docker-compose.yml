@@ -65,6 +65,9 @@ services:
 
 volumes:
   wedding-data:
+    # 显式指定卷名。不写的话 compose 会按项目目录名加前缀（wedding_wedding-data），
+    # 换个目录克隆就换个卷名，备份命令和文档全得跟着改。
+    name: wedding-data
 
 networks:
   caddy:
