@@ -143,53 +143,6 @@
     if (p >= 1 && ring) ring.classList.add('full');
   }
 
-  // ------------------------------------------------------------ 复制地址
-  // 三级降级。X5 上 execCommand 比 Clipboard API 可靠，
-  // iOS WKWebView 必须走 setSelectionRange 那一步。
-  function copyText(text) {
-    return new Promise(function (resolve) {
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(function () { resolve(true); },
-                                                  function () { resolve(legacy()); });
-        return;
-      }
-      resolve(legacy());
-
-      function legacy() {
-        try {
-          var ta = doc.createElement('textarea');
-          ta.value = text;
-          ta.setAttribute('readonly', '');
-          ta.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
-          doc.body.appendChild(ta);
-          ta.focus();
-          ta.select();
-          if (ta.setSelectionRange) ta.setSelectionRange(0, 99999);
-          var ok = doc.execCommand('copy');
-          doc.body.removeChild(ta);
-          return ok;
-        } catch (e) { return false; }
-      }
-    });
-  }
-
-  var copyBtn = $('#copyAddr');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', function () {
-      var addr = ($('#addrText').textContent || '').trim() + ' 美悦云禧酒店 5楼云颂厅';
-      copyText(addr).then(function (ok) {
-        // 微信里 fixed toast 常被键盘顶飞，所以在按钮上原地反馈
-        var old = copyBtn.textContent;
-        copyBtn.textContent = ok ? '已复制' : '请长按上方地址复制';
-        if (ok) copyBtn.classList.add('btn--solid');
-        setTimeout(function () {
-          copyBtn.textContent = old;
-          copyBtn.classList.remove('btn--solid');
-        }, 1800);
-      });
-    });
-  }
-
   // ------------------------------------------------------------ 平滑滚动
   // 禁用 scroll-behavior:smooth（X5 上卡），自写 rAF tween。
   function scrollTo(target) {
