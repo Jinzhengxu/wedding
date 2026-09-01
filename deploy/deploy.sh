@@ -97,6 +97,27 @@ strip_block() {
   ' "$CADDYFILE_HOST" > "$1"
 }
 
+# 用 $1 的内容【原地覆盖】$2，绝不 mv。
+#
+# 为什么：Caddyfile 是以【单个文件】的形式 bind mount 进 caddy 容器的，
+# docker 挂的是 inode 不是路径。mv 会换掉 inode，宿主这边看着改好了，
+# 容器里读到的还是旧文件 —— validate 和 reload 都会「成功」，
+# 但 Caddy 根本没见过新站点，也就永远不会去签证书。
+# 这个坑排查了很久，别改回 mv。
+write_inplace() {
+  cat "$1" > "$2"
+  rm -f "$1"
+}
+
+# 确认容器里【真的】看得见我们写的东西。上面那个坑的直接防线。
+verify_in_container() {
+  local inpath; inpath="$(caddyfile_in_container)"
+  docker exec "$CADDY_CONTAINER" grep -qF "$BEGIN_MARK" "$inpath" 2>/dev/null && return 0
+  die "宿主文件已更新，但容器内 $inpath 里看不到站点块。
+     多半是单文件 bind mount 的 inode 失配（历史上被 mv 破坏过）。
+     解法：docker restart $CADDY_CONTAINER  （会让 matrix / 德扑断几秒）"
+}
+
 backup_caddyfile() {
   BACKUP_FILE="${CADDYFILE_HOST}.bak.$(date +%Y%m%d-%H%M%S)"
   cp -a "$CADDYFILE_HOST" "$BACKUP_FILE"
@@ -105,11 +126,12 @@ backup_caddyfile() {
 
 restore_caddyfile() {
   [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ] || return 0
-  cp -a "$BACKUP_FILE" "$CADDYFILE_HOST"
+  cat "$BACKUP_FILE" > "$CADDYFILE_HOST"   # 同样原地写，别用 mv/cp -a
   warn "已还原 Caddyfile"
 }
 
 reload_caddy() {
+  verify_in_container
   local inpath; inpath="$(caddyfile_in_container)"
   docker exec "$CADDY_CONTAINER" caddy validate --config "$inpath" --adapter caddyfile >/dev/null 2>&1 \
     || { restore_caddyfile; die "caddy validate 没过，已还原。手工看：docker exec $CADDY_CONTAINER caddy validate --config $inpath"; }
@@ -127,7 +149,7 @@ if [ "${1:-}" = "--rollback" ]; then
   if grep -qF "$BEGIN_MARK" "$CADDYFILE_HOST"; then
     backup_caddyfile
     strip_block "$CADDYFILE_HOST.new"
-    mv "$CADDYFILE_HOST.new" "$CADDYFILE_HOST"
+    write_inplace "$CADDYFILE_HOST.new" "$CADDYFILE_HOST"
     reload_caddy
   else
     ok "Caddyfile 里本来就没有 wedding 块"
@@ -167,7 +189,7 @@ else
   # 去掉结尾多余空行，再追加新块
   printf '\n' >> "$CADDYFILE_HOST.new"
   sed "s/__DOMAIN__/$WEDDING_DOMAIN/g" "$SITE_SNIPPET" >> "$CADDYFILE_HOST.new"
-  mv "$CADDYFILE_HOST.new" "$CADDYFILE_HOST"
+  write_inplace "$CADDYFILE_HOST.new" "$CADDYFILE_HOST"
   ok "站点块已写入（整块替换）"
   reload_caddy
 fi

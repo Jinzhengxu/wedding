@@ -83,6 +83,47 @@ Dockerfile 里那句 `chown -R node:node` 也不能删 —— docker 初始化�
 
 ---
 
+## 排障：站点 502 / TLS alert 80 / 证书签不下来
+
+先分清是哪一层：
+
+```bash
+curl -I --resolve wedding.ccswitch.online:80:107.172.225.199 http://wedding.ccswitch.online/
+```
+
+- **回 308** → Caddy 认得这个域名，问题在 TLS 或上游。
+- **连接直接断（curl 报 000）** → Caddy 压根不知道这个域名，看下一条。
+
+```bash
+docker exec matrix-chat-caddy-1 grep -c wedding /etc/caddy/Caddyfile
+```
+
+**宿主上的 Caddyfile 有 wedding，但这条命令输出 0 —— 这是最坑的一种。**
+Caddyfile 是以【单个文件】bind mount 进 caddy 容器的，docker 挂的是 inode 不是路径。
+任何用 `mv` 或「写临时文件再改名」的方式改这个文件，都会换掉 inode：
+宿主这边看着改好了，容器里读到的还是旧文件。于是 `caddy validate` 和
+`caddy reload` 全部「成功」，日志里只有一句 `config is unchanged`，
+Caddy 从没见过这个站点，也就永远不会去签证书 —— 没有报错，没有失败记录，
+什么都不会发生。
+
+`deploy.sh` 现在一律原地覆盖（`cat a > b`），并且在 reload 前会验证容器内可见性。
+如果挂载关系已经被历史操作破坏了，只有重启能修：
+
+```bash
+docker restart matrix-chat-caddy-1    # matrix / chat / 德扑会断几秒
+```
+
+证书签发过程：
+
+```bash
+docker logs -f --since 10s matrix-chat-caddy-1 | grep -iE "wedding|obtain|cert|error"
+docker exec matrix-chat-caddy-1 sh -c 'ls /data/caddy/certificates/*/'   # 现有证书
+```
+
+Let's Encrypt 对同一域名验证失败有每小时 5 次上限，别盲目重试，看清错误再动。
+
+---
+
 ## 以后若把 Cloudflare 改成橙云代理
 
 `deploy/caddy-site.txt` 里换一行：
