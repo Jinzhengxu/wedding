@@ -127,8 +127,10 @@ def build_card():
     draw_tracked(d, (0, y), "金正旭　刘俊懿　敬邀", font(False, 26), INK2,
                  tracking=6, anchor_center_x=cx)
     y += 42
-    draw_tracked(d, (0, y), "金宪举　刘建伟　夫妇　谨订", font(False, 24), INK2,
-                 tracking=5, anchor_center_x=cx)
+    # 跟上一行同号同字距。谨订这行 13 个字，26 号带 6px 字距是 410px，
+    # 离上面那两条 600px 的界线还远，宽度上没有让它变小的理由。
+    draw_tracked(d, (0, y), "金宪举　刘建伟　夫妇　谨订", font(False, 26), INK2,
+                 tracking=6, anchor_center_x=cx)
     y += 50
 
     # 「席设」收在落款之后 —— 传统请柬的次序。34 号而不是 36 号：

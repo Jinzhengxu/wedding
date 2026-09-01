@@ -5,8 +5,8 @@
 
    · HTML 的默认状态 = 动画的终态。初始隐藏只写在 CSS 的 html.js 选择器下。
      这个文件整个挂掉、IntersectionObserver 不被支持、脚本被运营商劫持，
-     页面依然是完整可读的静态页。表单带真实 action，导航是真实 <a href>，
-     折叠用原生 <details> —— JS 只做接管，不做承载。
+     页面依然是完整可读的静态页。表单带真实 action，导航是真实 <a href>
+     —— JS 只做接管，不做承载。
 
    · 不监听 scroll 事件驱动动画（微信 X5 惯性滑动期间回调节流极粗）。
      一律用 IntersectionObserver，命中即 unobserve。

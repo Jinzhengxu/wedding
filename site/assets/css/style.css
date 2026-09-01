@@ -340,11 +340,10 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 #moon .when { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); margin-top: 18px; }
 
 /* ============================================================ 屏 7 怎么去
-   这一屏整屏豁免全站的克制原则：字号放大一档、按钮加高、话说全。
-   用户在这里的目标是行动，不是欣赏。 */
+   这一屏整屏豁免全站的克制原则：字号放大一档、按钮加高。
+   用户在这里的目标是行动，不是欣赏。
+   本屏没有标题 —— 跟 #cover / #tie / #moon / #foot 一样，靠内容自证。 */
 #go { margin-top: var(--sec-gap); }
-#go h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; line-height: 1.55; }
-#go .rule { width: 40px; margin: 12px 0 0; }
 .go-facts { margin-top: 26px; border-block: 1px solid var(--gold-soft); padding: 22px 0; }
 .go-facts .row + .row { margin-top: 24px; }
 .go-facts .lb {
@@ -366,17 +365,6 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 .go-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
 .go-nav .btn { min-height: 72px; }
 
-#go details { margin-top: 22px; border-top: 1px solid var(--line); }
-#go summary {
-  min-height: 52px; display: flex; align-items: center; justify-content: space-between;
-  cursor: pointer; list-style: none; font-size: var(--fs-body);
-}
-#go summary::-webkit-details-marker { display: none; }
-#go summary::after { content: '＋'; color: var(--ink-2); font-family: var(--f-sans); }
-#go details[open] summary::after { content: '－'; }
-#go details .body { padding-bottom: 20px; }
-#go details p { font-size: var(--fs-body); line-height: 1.9; }
-#go details p + p { margin-top: 10px; }
 
 /* ========================================================= 翻页记号
    一条金线，正中坐一枚细线圆环包着的「囍」，上半在纸白里、下半在礼红里。

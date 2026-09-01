@@ -423,7 +423,16 @@ async function serveStatic(req, res, url) {
 
 // ---------------------------------------------------------------- 入口
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  // req.url 是外部输入，解析必须在 try 里。「GET //」这种就足以让 new URL 抛错
+  // （被当成缺主机名的协议相对 URL），而它原先抛在 try 外面 —— 未捕获异常，
+  // 整个进程退出，站点直接挂掉。谁都能拿一行 curl 反复把它打下去。
+  let url;
+  try {
+    url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  } catch {
+    return send(res, 400, 'bad request');
+  }
+
   try {
     if (url.pathname.startsWith('/api/')) return await handleApi(req, res, url);
     if (url.pathname.startsWith('/admin')) return await handleAdmin(req, res, url);
