@@ -563,13 +563,17 @@ html.js.motion .seal { animation: stamp 220ms var(--e-seal) both; }
   text-align: center; padding: var(--sec-gap) var(--pad-x)
             calc(env(safe-area-inset-bottom) + 76px);   /* 给右下角圆钮让位 */
 }
-#foot .sign { font-size: var(--fs-h2); font-weight: 500; letter-spacing: .22em; margin-top: 30px; }
-/* 落款两行是一件事：新人「敬邀」、双亲「谨订」。这行原先是无衬线 + 金色，
-   跟上面那行宋体白字撞成两种字体，所以统一回宋体、去掉 color 让它跟着 --red-ink。
-   字号退半档（h2 → lead）不是分尊卑，是这行 13 个字比上面那行 10 个字长：
-   实测同号时 320/360px 会断成 3 行，414px 才勉强一行。退半档之后还有个便宜可占 ——
-   ≤390px 两行宽度几乎相等（268 / 267px），落款看着像一整块。 */
-#foot .fam  { font-size: var(--fs-lead); font-weight: 500; letter-spacing: .14em; margin-top: 12px; }
+/* 落款两行是一件事：新人「敬邀」、双亲「谨订」。同宋体、同字号、同字距、同颜色，
+   只靠行距分开 —— 跟帖芯里那两行的处理保持一致。
+
+   为什么两行一起用 lead 而不是让「谨订」升到 h2：谨订这行 13 个字，敬邀那行
+   只有 10 个。h2 在窄屏是 21.6px，13 × 21.6 = 281px，而 320px 的屏只留得出
+   280px —— 字距压到 0 都还差 1px，再宽的字距只会断行。lead(18px) 带 .16em
+   字距是 271px，320px 上留 9px 余量，一路到 430px 都是一行。 */
+#foot .sign,
+#foot .fam  { font-size: var(--fs-lead); font-weight: 500; letter-spacing: .16em; }
+#foot .sign { margin-top: 30px; }
+#foot .fam  { margin-top: 12px; }
 #foot .meta { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 14px; }
 #foot .last { font-size: var(--fs-lead); letter-spacing: .18em; margin-top: 26px; }
 #foot .credit { font-family: var(--f-sans); font-size: .75rem; color: rgba(217,190,134,.5); margin-top: 32px; line-height: 1.8; }
