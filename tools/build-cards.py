@@ -92,7 +92,7 @@ def build_card():
     d.rectangle([0, PH, CW, CH], fill=PAPER)
 
     y = PH + 26
-    rule(d, cx, y, 84); y += 46
+    rule(d, cx, y, 84); y += 44
 
     # 姓名两组，中间留一条竖金线。每组宽 3*76 + 2*22 = 272，
     # 所以中心必须各偏 (272 + 间隙 90) / 2 = 181，否则会撞在一起。
@@ -100,37 +100,48 @@ def build_card():
     draw_tracked(d, (0, y), "金正旭", nf, INK, tracking=22, anchor_center_x=cx - 181)
     draw_tracked(d, (0, y), "刘俊懿", nf, INK, tracking=22, anchor_center_x=cx + 181)
     d.rectangle([cx - 1, y + 22, cx, y + 74], fill=GOLD)
-    y += 116
+    y += 112
 
     draw_tracked(d, (0, y), "二〇二六年九月二十六日", font(False, 40), INK,
                  tracking=6, anchor_center_x=cx)
-    y += 60
+    y += 58
     draw_tracked(d, (0, y), "星期六　农历丙午年八月十六", font(False, 28), INK2,
                  tracking=3, anchor_center_x=cx)
-    y += 58
+    y += 54
+
+    rule(d, cx, y, 600, (0xDF, 0xDB, 0xD0), h=1); y += 28
+
+    # 只写「中午」，不写钟点。四个字放在两条 600px 界线之间会显空，
+    # 所以字号提到 40、字距拉到 22（约 226px），当一枚印记来排。
+    draw_tracked(d, (0, y), "中午开席", font(False, 40), INK,
+                 tracking=22, anchor_center_x=cx)
+    y += 56
 
     rule(d, cx, y, 600, (0xDF, 0xDB, 0xD0), h=1); y += 30
 
-    draw_tracked(d, (0, y), "11:58 典礼　·　12:18 开席", font(False, 36), INK,
-                 tracking=2, anchor_center_x=cx)
-    y += 56
-    draw_tracked(d, (0, y), "美悦云禧酒店　5楼 云颂厅", font(True, 36), INK,
-                 tracking=4, anchor_center_x=cx)
-    y += 54
-    draw_tracked(d, (0, y), "山东省济南市槐荫区兴福寺路2660号", font(False, 26), INK2,
-                 tracking=2, anchor_center_x=cx)
-    y += 54
-
-    rule(d, cx, y, 600, (0xDF, 0xDB, 0xD0), h=1); y += 34
-
     draw_tracked(d, (0, y), "敬备喜筵　恭候光临", font(False, 33), INK,
                  tracking=10, anchor_center_x=cx)
-    y += 54
+    y += 50
+    # 落款两层：新人「敬邀」，男方双亲「谨订」。多这一行要从上面每一段
+    # 各借几像素，不然会顶到卡底那道 56px 的金线上（见文末 assert）。
     draw_tracked(d, (0, y), "金正旭　刘俊懿　敬邀", font(False, 26), INK2,
                  tracking=6, anchor_center_x=cx)
-    y += 40
+    y += 42
+    draw_tracked(d, (0, y), "金宪举　刘建伟　夫妇　谨订", font(False, 24), INK2,
+                 tracking=5, anchor_center_x=cx)
+    y += 50
 
-    assert y < CH - 40, "喜帖卡内容溢出：y=%d" % y
+    # 「席设」收在落款之后 —— 传统请柬的次序。34 号而不是 36 号：
+    # 多了「席设」两个字，36 号这一行会宽过上面那两条 600px 的界线。
+    draw_tracked(d, (0, y), "席设　美悦云禧酒店　5楼云颂厅", font(True, 34), INK,
+                 tracking=3, anchor_center_x=cx)
+    y += 50
+    draw_tracked(d, (0, y), "山东省济南市槐荫区兴福寺路2660号", font(False, 26), INK2,
+                 tracking=2, anchor_center_x=cx)
+    y += 38
+
+    # 守的是卡底那道金线（画在 CH-54），不是纸边 —— 文字压上去才是真难看。
+    assert y < CH - 54, "喜帖卡内容顶到卡底金线：y=%d" % y
     rule(d, cx, CH - 54, 56)
 
     p = os.path.join(ROOT, "build", "invite-card.png")

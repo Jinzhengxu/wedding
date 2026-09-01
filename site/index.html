@@ -13,7 +13,7 @@
      这几行只对非微信浏览器有效。微信的那张图见 <body> 第一行。 -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="金正旭 · 刘俊懿 婚礼请柬">
-<meta property="og:description" content="9月26日（农历八月十六），济南美悦云禧酒店。点开看看，记得回执。">
+<meta property="og:description" content="9月26日（农历八月十六），济南美悦云禧酒店。点开看看，记得回我们一声。">
 <!-- og:image / og:url 必须是绝对地址：抓取方（Telegram、飞书、Twitter）
      不一定带着页面 URL 去解析相对路径，写相对路径它们就抓不到图。 -->
 <meta property="og:url" content="https://wedding.ccswitch.online/">
@@ -62,8 +62,9 @@
   <div class="cover-foot">
     <!-- 姓名不压在照片上。这张照片的干净背景只在两侧各留了一条窄边，
          竖排名字压上去会正好落在两人的头发上，谁也读不出来。
-         放在照片下方的留白里，男右女左 —— 与照片里两人的实际站位一致
-         （新郎在画面右侧），也是传统请柬男前女后的顺序。 -->
+         放在照片下方的留白里，男左女右 —— 婚俗里男左女右是定规，
+         比照片里的站位（新郎在画面右侧）更该迁就。
+         CSS 里 .cover-names 用正序 row，别再改回 row-reverse。 -->
     <h1 class="cover-names">
       <span class="col">金正旭</span>
       <span class="rod" aria-hidden="true"></span>
@@ -84,22 +85,28 @@
   <div class="tie-card reveal">
     <div class="hair hair--c" aria-hidden="true"></div>
     <p class="k" style="margin-top:18px">二〇二六年九月二十六日</p>
-    <p class="s">星期六　农历丙午年八月十六　<span class="nowrap">中秋次日</span></p>
+    <p class="s">星期六　农历丙午年八月十六</p>
 
     <div class="div" aria-hidden="true"></div>
-    <p class="k"><span class="lat">11:58</span> 典礼　·　<span class="lat">12:18</span> 开席</p>
-
-    <div class="div" aria-hidden="true"></div>
-    <p class="k"><span class="nowrap">美悦云禧酒店</span>　<span class="nowrap">5楼 云颂厅</span></p>
-    <p class="addr">山东省济南市槐荫区<span class="nowrap">兴福寺路2660号</span></p>
+    <p class="k hour">中午开席</p>
 
     <div class="hair hair--c" style="margin-top:22px" aria-hidden="true"></div>
     <p class="salute" style="margin-top:20px">敬备喜筵　恭候光临</p>
     <p class="sign">金正旭　刘俊懿　敬邀</p>
+    <!-- 男方双亲。「谨订」是长辈设宴的落款用词，跟新人的「敬邀」分成两层，
+         这样一张帖上既有主人也有新人，不必再写「男方父母」四个字来标注。 -->
+    <p class="fam">金宪举　刘建伟　夫妇　谨订</p>
+
+    <!-- 「席设」压在落款之后 —— 传统请柬的次序：先说日子、再敬邀，
+         最后才落到席面摆在哪儿。地点是最后一句，不是中间一栏。 -->
+    <div class="div" style="margin-top:20px" aria-hidden="true"></div>
+    <p class="seat">席设</p>
+    <p class="k"><span class="nowrap">美悦云禧酒店</span>　<span class="nowrap">5楼 云颂厅</span></p>
+    <p class="addr">山东省济南市槐荫区<span class="nowrap">兴福寺路2660号</span></p>
 
     <div class="tie-acts">
       <a class="btn" href="#go">怎么去</a>
-      <a class="btn btn--solid" href="#rsvp">回执</a>
+      <a class="btn btn--solid" href="#rsvp">回个话</a>
     </div>
   </div>
 </section>
@@ -117,7 +124,7 @@
            alt="灰墙前的全身合影，新娘白缎大拖尾婚纱" loading="lazy" decoding="async">
     </picture>
   </div>
-  <figcaption class="cap">素壁　长裙曳地</figcaption>
+  <figcaption class="cap">一袭白纱　长裙曳地</figcaption>
 </figure>
 
 <figure class="plate plate--bleed reveal">
@@ -130,7 +137,7 @@
            alt="半身特写，前景是垂坠的绿蕨与白玫瑰捧花" loading="lazy" decoding="async">
     </picture>
   </div>
-  <figcaption class="cap">一束绿</figcaption>
+  <figcaption class="cap">花开正好</figcaption>
 </figure>
 
 <figure class="plate plate--full wrap reveal">
@@ -178,9 +185,9 @@
     </div>
   </div>
 
-  <p class="sr-only" id="cdSr">婚礼日期：2026年9月26日 星期六 中午12点18分开席。</p>
-  <p class="when wrap">二〇二六年九月二十六日　中午十二时十八分</p>
-  <p class="lead wrap reveal">中秋次日　十五的月亮十六圆</p>
+  <p class="sr-only" id="cdSr">婚礼日期：2026年9月26日 星期六 中午开席。</p>
+  <p class="when wrap">二〇二六年九月二十六日　中午开席</p>
+  <p class="lead wrap reveal">十五的月亮十六圆</p>
 </section>
 
 
@@ -193,8 +200,8 @@
 
   <div class="go-facts reveal">
     <div class="row">
-      <div class="lb">时刻</div>
-      <div class="vl"><span class="lat">11:58</span> 典礼　·　<span class="lat">12:18</span> 开席</div>
+      <div class="lb">时间</div>
+      <div class="vl"><span class="lat">9.26</span> 星期六　中午开席</div>
     </div>
     <div class="row">
       <div class="lb">地点</div>
@@ -220,8 +227,8 @@
     ▲▲ -->
   </div>
 
-  <p class="go-hint reveal">点击后微信会提示跳转到地图，点「继续」即可。<br>
-     也可以先复制地址，再自己粘到地图 App 里。</p>
+  <p class="go-hint reveal">点下面的按钮，微信会问一句要不要跳转，点「继续」就行。<br>
+     也可以先把地址复制走，再打开地图软件粘上去。</p>
 
   <div class="go-nav reveal">
     <a class="btn" id="navAmap" href="https://uri.amap.com/search?keyword=%E7%BE%8E%E6%82%A6%E4%BA%91%E7%A6%A7%E9%85%92%E5%BA%97&amp;city=%E6%B5%8E%E5%8D%97&amp;view=map&amp;src=wedding"
@@ -233,7 +240,7 @@
   </div>
 
   <details class="reveal">
-    <summary>自驾停车 · 乘车</summary>
+    <summary>开车 · 停车 · 打车</summary>
     <div class="body">
       <p>酒店在<span class="nowrap">兴福寺路 2660 号</span>，导航直接搜「美悦云禧酒店」就能到，
          紧邻<span class="nowrap">山东国际会展中心</span>。</p>
@@ -273,7 +280,7 @@
     <h2>中式 · 婚书</h2>
     <!-- ▼ 待填：中式敬茶环节的时段。知道了就把下面这行换成
          「当日 ○○ 时行敬茶之礼　恭候诸亲光临」 -->
-    <p>当日另备一袭中式礼服　恭候诸亲光临</p>
+    <p>当天我们也备了一身中式礼服　与诸亲同喜</p>
   </div>
 </section>
 
@@ -284,8 +291,8 @@
     <div class="sheet reveal">
       <h2>敬请回复</h2>
       <div class="hair rule" style="width:40px;margin-top:12px" aria-hidden="true"></div>
-      <p class="why" id="rsvpWhy">为便于安排席位，也为了不多备也不少备一副碗筷，
-         请您于 <span class="nowrap">9 月 15 日</span>前告知。</p>
+      <p class="why" id="rsvpWhy">席位要提前排，碗筷也得按人头备。
+         麻烦您在 <span class="nowrap">9 月 15 日</span>前，跟我们说一声。</p>
 
       <form id="rsvpForm" action="/api/rsvp" method="post" novalidate>
         <div class="fld">
@@ -295,27 +302,27 @@
         </div>
 
         <div class="fld">
-          <span class="lb" id="lbGo">能来吗</span>
+          <span class="lb" id="lbGo">您能来吗</span>
           <div class="pick pick--2" role="radiogroup" aria-labelledby="lbGo" id="pickGo">
             <button type="button" role="radio" aria-checked="true"  data-v="yes">准时赴宴</button>
-            <button type="button" role="radio" aria-checked="false" data-v="no" class="soft">实在抱歉</button>
+            <button type="button" role="radio" aria-checked="false" data-v="no" class="soft">恐怕来不了</button>
           </div>
           <input type="hidden" name="attending" id="rGo" value="yes">
         </div>
 
         <div class="fld" id="fldGuests">
-          <span class="lb" id="lbNum">一同前来几位</span>
+          <span class="lb" id="lbNum">一共来几位</span>
           <div class="step" aria-labelledby="lbNum">
             <button type="button" id="gMinus" aria-label="减少一位">−</button>
             <span class="n lat" id="gNum">1</span>
             <button type="button" id="gPlus" aria-label="增加一位">＋</button>
           </div>
-          <p class="tip">含您自己</p>
+          <p class="tip">包括您自己</p>
           <input type="hidden" name="guests" id="rGuests" value="1">
         </div>
 
         <div class="fld">
-          <span class="lb" id="lbSide">您是</span>
+          <span class="lb" id="lbSide">男方还是女方</span>
           <div class="pick pick--3" role="radiogroup" aria-labelledby="lbSide" id="pickSide">
             <button type="button" role="radio" aria-checked="false" data-v="男方">男方亲友</button>
             <button type="button" role="radio" aria-checked="false" data-v="女方">女方亲友</button>
@@ -333,7 +340,7 @@
         <div class="fld">
           <label class="lb" for="rNote">想说的话（选填）</label>
           <textarea id="rNote" name="note" maxlength="200" rows="3"
-                    placeholder="忌口、需要接站、或者只是想说两句"></textarea>
+                    placeholder="忌口、要不要接站，或者只是想说两句"></textarea>
         </div>
 
         <div class="hp" aria-hidden="true">
@@ -341,15 +348,15 @@
         </div>
 
         <button class="btn btn--solid btn--wide" type="submit" id="rsvpSubmit"
-                style="margin-top:26px">提交回执</button>
+                style="margin-top:26px">发送回复</button>
         <p class="msg" id="rsvpMsg" role="status" aria-live="polite"></p>
       </form>
 
       <div class="done-box" id="rsvpDone" hidden>
-        <p class="ttl">已收到 · 期待与您相见</p>
+        <p class="ttl">收到了 · 那天见</p>
         <p class="sum" id="rsvpSum"></p>
         <button class="again" type="button" id="rsvpAgain">修改回复</button>
-        <div class="seal" aria-hidden="true">已<br>回执</div>
+        <div class="seal" aria-hidden="true">已<br>回复</div>
       </div>
     </div>
   </div>
@@ -369,7 +376,7 @@
             style="margin-top:20px">写一句祝福</button>
 
     <div class="wish-list" id="wishList"></div>
-    <p class="wish-empty" id="wishEmpty" hidden>暂无留言 · 您可以是第一个</p>
+    <p class="wish-empty" id="wishEmpty" hidden>还没有人留言 · 您来写第一句</p>
     <button class="wish-more" type="button" id="wishMore" hidden></button>
   </div>
 </section>
@@ -378,7 +385,7 @@
 <!-- ==================================================== 保存喜帖 -->
 <section id="keep" class="red">
   <div class="wrap">
-    <h2 class="sec reveal">带走这张帖</h2>
+    <h2 class="sec reveal">存下这张喜帖</h2>
     <img class="card-img reveal" src="assets/img/invite-card.jpg"
          width="1080" height="1440" loading="lazy" decoding="async"
          alt="金正旭与刘俊懿的婚礼请柬，二〇二六年九月二十六日，济南美悦云禧酒店五楼云颂厅">
@@ -390,11 +397,14 @@
 <!-- ==================================================== 屏 11 · 落款 -->
 <footer id="foot" class="red">
   <div class="hair hair--red hair--c" style="width:56px" aria-hidden="true"></div>
+  <!-- 落款两行连着走，中间不插日期 —— 「谁请的」是一件事，
+       日期地点是另一件事，被隔开就不像一份落款了。 -->
   <p class="sign">金正旭　刘俊懿　敬邀</p>
+  <!-- ▼ 待填：女方双亲的名字。拿到后写成
+       「金宪举　刘建伟　　刘××　×××　夫妇　谨订」，两组之间空两格。
+       现在只落男方，是因为这一版按男方发帖办；两家合发就得把女方补齐。 -->
+  <p class="fam">金宪举　刘建伟　夫妇　谨订</p>
   <p class="meta">二〇二六年九月二十六日　·　山东济南</p>
-  <!-- ▼ 待填：拿到双方家长姓名后改成「金××　王××　　刘××　张××　谨订」。
-       「金府 · 刘府」是不知道名字时唯一得体的写法，不是占位符。 -->
-  <p class="fam">金 府　·　刘 府　谨订</p>
   <p class="last">恭候诸亲光临</p>
   <div class="hair hair--red hair--c" style="width:20px;margin-top:30px" aria-hidden="true"></div>
   <p class="credit">背景音乐 Air on the G String（BWV 1068）<br>
@@ -415,7 +425,7 @@
     <span class="ico-card" aria-hidden="true"></span>
   </button>
 </div>
-<div class="nudge" id="nudge" aria-hidden="true">点这里开音乐</div>
+<div class="nudge" id="nudge" aria-hidden="true">点这里，听点音乐</div>
 
 <audio id="bgm" src="assets/audio/bgm.mp3" preload="none" loop></audio>
 

@@ -201,7 +201,7 @@ html.js .ph img.ready { opacity: 1; }
 }
 
 .cover-names {
-  display: flex; flex-direction: row-reverse; align-items: flex-start;
+  display: flex; flex-direction: row; align-items: flex-start;
   justify-content: center; gap: clamp(20px, 6vw, 32px);
   margin: 0; font-weight: 600;
 }
@@ -218,7 +218,7 @@ html.js .ph img.ready { opacity: 1; }
 }
 /* 内核不支持竖排时退回横排一行，信息一个字不丢 */
 @supports not (writing-mode: vertical-rl) {
-  .cover-names { flex-direction: row-reverse; align-items: center; }
+  .cover-names { flex-direction: row; align-items: center; }
   .cover-names .col { writing-mode: horizontal-tb; margin-bottom: 0; }
   .cover-names .rod { width: 1px; height: 1.2em; align-self: center; }
 }
@@ -251,12 +251,29 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 }
 .tie-card .k { font-size: var(--fs-key); font-weight: 600; line-height: 1.7; }
 .tie-card .s { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); }
+/* 只有「中午开席」四个字撑这一栏，按 .k 的默认字距排会缩成一小坨。
+   拉开字距当印记用，才压得住上下两条界线之间的这段留白。 */
+.tie-card .hour { letter-spacing: .28em; text-indent: .28em; }
+
+/* 「席设」单独一行。跟酒店名挤在一行会超出卡片 13px，断行正好断在
+   「美悦云禧酒店 / 5楼云颂厅」中间，很难看。拉开字距当标签用，
+   与上面「敬备喜筵」那行的疏密呼应。 */
+.tie-card .seat {
+  font-size: var(--fs-note); color: var(--ink-2);
+  letter-spacing: .3em; text-indent: .3em; margin-bottom: 4px;
+}
 .tie-card .addr { font-size: var(--fs-addr); color: var(--ink-2); line-height: 1.72; margin-top: 4px; }
 .tie-card .div { height: 1px; background: var(--line); margin: 16px 0; }
 .tie-card .salute { font-size: var(--fs-lead); letter-spacing: .14em; margin-top: 4px; }
 .tie-card .sign {
   font-family: var(--f-sans); font-size: var(--fs-note);
   color: var(--ink-2); letter-spacing: .1em; margin-top: 6px;
+}
+/* 落款两行：新人一行、男方双亲一行。同字号同颜色，只靠一点行距分开 ——
+   长辈的名字不该比新人的小一号，那是排版在替人分尊卑。 */
+.tie-card .fam {
+  font-family: var(--f-sans); font-size: var(--fs-note);
+  color: var(--ink-2); letter-spacing: .1em; margin-top: 4px;
 }
 .tie-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
 
@@ -547,7 +564,7 @@ html.js.motion .seal { animation: stamp 220ms var(--e-seal) both; }
 }
 #foot .sign { font-size: var(--fs-h2); font-weight: 500; letter-spacing: .22em; margin-top: 30px; }
 #foot .meta { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 14px; }
-#foot .fam  { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 6px; letter-spacing: .1em; }
+#foot .fam  { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 10px; letter-spacing: .1em; }
 #foot .last { font-size: var(--fs-lead); letter-spacing: .18em; margin-top: 26px; }
 #foot .credit { font-family: var(--f-sans); font-size: .75rem; color: rgba(217,190,134,.5); margin-top: 32px; line-height: 1.8; }
 

@@ -189,7 +189,7 @@ async function handleApi(req, res, url) {
 
   // ------- 提交回执
   if (url.pathname === '/api/rsvp' && req.method === 'POST') {
-    if (!rateLimit(ip, 1)) return json(res, 429, { ok: false, error: '提交太频繁了，稍等一分钟再试' });
+    if (!rateLimit(ip, 1)) return json(res, 429, { ok: false, error: '点得太快啦，歇一分钟再试' });
     let body;
     try { body = JSON.parse(await readBody(req)); }
     catch { return json(res, 400, { ok: false, error: '请求格式不对' }); }
@@ -345,10 +345,10 @@ async function handleAdmin(req, res, url) {
   <div><b>${wishes.filter((w) => !w.hidden).length}</b><span>祝福留言</span></div>
 </div>
 
-<h2>宾客回执 <a class="btn" href="/admin/rsvp.csv?key=${k}">导出 CSV</a></h2>
+<h2>宾客回复 <a class="btn" href="/admin/rsvp.csv?key=${k}">导出 CSV</a></h2>
 <div class="overflow"><table>
 <tr><th>时间</th><th>称呼</th><th>出席</th><th>人数</th><th>来自</th><th>电话</th><th>留言</th></tr>
-${rows.length === 0 ? '<tr><td colspan="7" class="muted">还没有人回执</td></tr>' : ''}
+${rows.length === 0 ? '<tr><td colspan="7" class="muted">还没有人回复</td></tr>' : ''}
 ${rows.map((r) => `<tr class="${r.attending === 'yes' ? '' : 'no'}">
 <td class="muted">${esc(t(r.ts))}</td><td>${esc(r.name)}</td>
 <td>${r.attending === 'yes' ? '✓ 出席' : '— 不能来'}</td>

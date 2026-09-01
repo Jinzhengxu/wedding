@@ -76,10 +76,10 @@
 
   // ------------------------------------------------------------ 倒计时 + 月环
   // 环走满整整一年：2025-09-26 → 2026-09-26，婚礼当天恰好闭合成满月。
-  var WEDDING   = new Date('2026-09-26T12:18:00+08:00').getTime();
+  var WEDDING   = new Date('2026-09-26T12:00:00+08:00').getTime();
   var DAY_START = new Date('2026-09-26T00:00:00+08:00').getTime();
   var DAY_END   = new Date('2026-09-27T00:00:00+08:00').getTime();
-  var RING_FROM = new Date('2025-09-26T12:18:00+08:00').getTime();
+  var RING_FROM = new Date('2025-09-26T12:00:00+08:00').getTime();
   var CIRC = 289.03;   // 2πr, r = 46
 
   var ring = $('#ring'), prog = $('#ringProg');
@@ -329,9 +329,9 @@
     if (!doneBox) return;
     form.hidden = true;
     doneBox.hidden = false;
-    // 已经回执了，就别再催「请于 9 月 15 日前告知」
+    // 已经回过话了，就别再催「9 月 15 日前跟我们说一声」
     var why = $('#rsvpWhy'); if (why) why.hidden = true;
-    var bits = [rec.attending === 'no' ? '您回复：实在抱歉' : '您回复：准时赴宴'];
+    var bits = [rec.attending === 'no' ? '您选了：恐怕来不了' : '您选了：准时赴宴'];
     if (rec.attending !== 'no' && rec.guests) bits.push('共 ' + rec.guests + ' 位');
     if (rec.side) bits.push(rec.side);
     $('#rsvpSum').textContent = bits.join(' · ');
@@ -372,7 +372,7 @@
       };
 
       btn.disabled = true;
-      btn.textContent = '提交中…';
+      btn.textContent = '发送中…';
       rsvpMsg.textContent = '';
 
       fetch('/api/rsvp', {
@@ -380,12 +380,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(rec)
       }).then(function (r) { return r.json(); }).then(function (d) {
-        if (!d || !d.ok) throw new Error((d && d.error) || '提交失败');
+        if (!d || !d.ok) throw new Error((d && d.error) || '没发出去，再试一次');
         store.set('rsvp_v1', JSON.stringify(rec));
         showDone(rec);
       }).catch(function (err) {
         btn.disabled = false;
-        btn.textContent = '提交回执';
+        btn.textContent = '发送回复';
         rsvpMsg.className = 'msg msg--err';
         rsvpMsg.textContent = (err && err.message) || '网络不太好，您也可以直接微信告诉我们';
       });
