@@ -423,6 +423,8 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 }
 .rite-foot { text-align: center; margin-top: 26px; }
 .rite-foot h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; }
+/* 此刻没有 <p> 用它 —— 「中式礼服」那句删了。留着是因为敬茶时段还待填，
+   补那一行的人不该还得再写一遍样式。 */
 .rite-foot p { font-size: var(--fs-body); color: var(--red-gold); margin-top: 10px; line-height: 1.85; }
 
 /* ---------------------------------------------------- 屏 9/10 红底上的纸
@@ -438,8 +440,7 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 .red h2.sec { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; color: var(--red-ink); }
 
 .sheet h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; color: var(--ink); }
-/* 抬头那道 40px 短线之后直接就是第一个输入框，给它一点余地 */
-#rsvpForm { margin-top: 8px; }
+.sheet .why { font-size: var(--fs-body); color: var(--ink-2); margin-top: 14px; line-height: 1.85; }
 
 /* --------------------------------------------------------------- 表单 */
 .fld { margin-top: 24px; }
@@ -563,8 +564,13 @@ html.js.motion .seal { animation: stamp 220ms var(--e-seal) both; }
             calc(env(safe-area-inset-bottom) + 76px);   /* 给右下角圆钮让位 */
 }
 #foot .sign { font-size: var(--fs-h2); font-weight: 500; letter-spacing: .22em; margin-top: 30px; }
+/* 落款两行是一件事：新人「敬邀」、双亲「谨订」。这行原先是无衬线 + 金色，
+   跟上面那行宋体白字撞成两种字体，所以统一回宋体、去掉 color 让它跟着 --red-ink。
+   字号退半档（h2 → lead）不是分尊卑，是这行 13 个字比上面那行 10 个字长：
+   实测同号时 320/360px 会断成 3 行，414px 才勉强一行。退半档之后还有个便宜可占 ——
+   ≤390px 两行宽度几乎相等（268 / 267px），落款看着像一整块。 */
+#foot .fam  { font-size: var(--fs-lead); font-weight: 500; letter-spacing: .14em; margin-top: 12px; }
 #foot .meta { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 14px; }
-#foot .fam  { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 10px; letter-spacing: .1em; }
 #foot .last { font-size: var(--fs-lead); letter-spacing: .18em; margin-top: 26px; }
 #foot .credit { font-family: var(--f-sans); font-size: .75rem; color: rgba(217,190,134,.5); margin-top: 32px; line-height: 1.8; }
 
