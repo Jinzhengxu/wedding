@@ -108,14 +108,11 @@
   // ------------------------------------------------------------ 倒计时 + 月环
   // 日期【只】写在 HTML 的 <meta name="ev-at"> 里。婚礼页和回门页共用这一份 JS，
   // 从前这四行是写死的 2026-09-26 —— 那样回门页的倒计时会指着婚礼那天。
-  // 环走满整整一年（当天减一年 → 当天），到日子恰好闭合。
   var AT   = meta('ev-at') || '2026-09-26T12:00:00+08:00';
   var YMD  = AT.slice(0, 10);                                  // 2026-09-26
   var EVENT     = new Date(AT).getTime();
   var DAY_START = new Date(YMD + 'T00:00:00+08:00').getTime();
   var DAY_END   = DAY_START + 86400000;
-  var RING_FROM = new Date((Number(YMD.slice(0, 4)) - 1) + AT.slice(4)).getTime();
-  var CIRC = 289.03;   // 2πr, r = 46
 
   var ring = $('#ring'), prog = $('#ringProg');
   var cdNum = $('#cdNum'), cdUnit = $('#cdUnit'), cdMid = $('#ringMid');
@@ -164,18 +161,38 @@
     });
   }
 
+  // 月环。从前它画的是「一年走到今天」的进度，只有婚礼当天才闭合成满月 ——
+  // 而那天没人会专门打开请柬来看，等于这个设计谁也看不见。现在改成：
+  // 谁划到这一屏，就当着谁的面合上。金线绕满一周（--d-ring），再让月面亮起。
+  // 环不再承载「还剩多久」的信息了 —— 那件事环心的数字一直在说，说得比环准。
+  var RING_MS = 1600;   // 跟 style.css 的 --d-ring 一致；只是 transitionend 的兜底，差几十毫秒无妨
   if (prog) {
-    var p = (Date.now() - RING_FROM) / (EVENT - RING_FROM);
-    p = Math.max(0, Math.min(1, p));
-    var draw = function () { prog.style.strokeDashoffset = (CIRC * (1 - p)).toFixed(2); };
-    if (lite) { draw(); }
+    var lit = function () { if (ring) ring.classList.add('full'); };
+    var close = function () {
+      // .armed 才把过渡装回去（见 style.css）。装完等一帧再改值，
+      // 让空环这个起点先落定 —— 同一帧里又装过渡又改值，老 WebKit 上会漏掉动画。
+      ring.classList.add('armed');
+      var go = function () {
+        prog.style.strokeDashoffset = '0';
+        // 先合线、后亮面，两拍。transitionend 在后台标签页里可能永远不来，加兜底。
+        var t = setTimeout(lit, RING_MS + 120);
+        prog.addEventListener('transitionend', function once(e) {
+          if (e.propertyName !== 'stroke-dashoffset') return;
+          prog.removeEventListener('transitionend', once);
+          clearTimeout(t);
+          lit();
+        });
+      };
+      if (window.requestAnimationFrame) requestAnimationFrame(go); else setTimeout(go, 32);
+    };
+    // 降级路径：html.lite 把 transition 全禁了，这里设值即到位，直接就是满月。
+    if (lite) { prog.style.strokeDashoffset = '0'; lit(); }
     else if ('IntersectionObserver' in window) {
       var ro = new IntersectionObserver(function (es) {
-        es.forEach(function (e) { if (e.isIntersecting) { draw(); ro.unobserve(e.target); } });
+        es.forEach(function (e) { if (e.isIntersecting) { ro.unobserve(e.target); close(); } });
       }, { threshold: 0.4 });
       ro.observe(ring);
-    } else { draw(); }
-    if (p >= 1 && ring) ring.classList.add('full');
+    } else { prog.style.strokeDashoffset = '0'; lit(); }
   }
 
   // ------------------------------------------------------------ 平滑滚动

@@ -111,8 +111,8 @@
     <p class="addr"><!--ev:tie-addr-->山东省济南市槐荫区<span class="nowrap">兴福寺路2660号</span><!--/ev--></p>
 
     <div class="tie-acts">
-      <a class="btn" href="#go">怎么去</a>
-      <a class="btn btn--solid" href="#rsvp">回个话</a>
+      <a class="btn" href="#go">查看路线</a>
+      <a class="btn btn--solid" href="#rsvp">敬请回复</a>
     </div>
   </div>
 </section>
@@ -181,8 +181,14 @@
 
 
 <!-- ======================================================= 屏 6 · 月相倒计时
-     金环按整整一年（2025-09-26 → 2026-09-26）走 stroke-dashoffset，
-     婚礼当天恰好闭合成一轮满月。 -->
+     金环从空到满绕一周，随后月面亮起 —— 划到这一屏就当场演一遍。
+     从前这一圈画的是「一年走到今天」的进度，只有婚礼当天才闭合成满月，
+     可那天没人会专门打开请柬来看，等于这个设计谁也看不见。
+     现在满月是给每一个划到这里的人看的；剩几天由环心的数字说。
+
+     stroke-dashoffset 的默认值写 0（= 满月）是有意的：脚本挂掉、
+     IntersectionObserver 不支持，静态页上也是一轮完整的满月，
+     不会停在一个残缺的圈上。空环那个起点只写在 CSS 的 html.js 下。 -->
 <section id="moon">
   <div class="moon-band">
     <!-- P4 第二次出现，同一文件同一档，浏览器缓存命中，零额外字节。
@@ -201,7 +207,7 @@
       <circle class="disc" cx="50" cy="50" r="46"/>
       <circle class="track" cx="50" cy="50" r="46"/>
       <circle class="prog" id="ringProg" cx="50" cy="50" r="46"
-              stroke-dasharray="289.03" stroke-dashoffset="289.03"/>
+              stroke-dasharray="289.03" stroke-dashoffset="0"/>
     </svg>
     <div class="mid" id="ringMid" aria-hidden="true">
       <span class="num lat tnum" id="cdNum"></span>
@@ -282,11 +288,13 @@
     </picture>
   </div>
   <div class="rite-vert reveal" aria-hidden="true">花好月圆</div>
-  <div class="rite-foot wrap reveal">
-    <h2>中式 · 婚书</h2>
-    <!-- ▼ 待填：中式敬茶环节的时段。知道了就在标题下面补一行
-         「当日 ○○ 时行敬茶之礼　恭候诸亲光临」 -->
-  </div>
+  <!-- 原来这里有个标题「中式 · 婚书」，删了：这一屏跟封面、帖芯、月相一样
+       不设标题，照片自己说得清，多一行标题反而像在给照片加注解。
+       ▼ 待填：中式敬茶环节的时段。知道了就把下面这块放出来 ——
+       <div class="rite-foot wrap reveal">
+         <p>当日 ○○ 时行敬茶之礼　恭候诸亲光临</p>
+       </div>
+       样式（.rite-foot / .rite-foot p）留在 style.css 里没删。 -->
 </section>
 
 

@@ -78,7 +78,7 @@
   --d-fast: 180ms;
   --d-base: 280ms;
   --d-slow: 520ms;
-  --d-ring: 1400ms;
+  --d-ring: 1600ms;   /* 月环现在要绕满整整一周，比从前多走一段，慢一档才不赶 */
   --reveal-y: 12px;
 }
 
@@ -355,13 +355,27 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
   margin: -14% auto 0; z-index: 1;
 }
 .moon-ring svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
-.moon-ring .disc { fill: transparent; transition: fill var(--d-slow) var(--e-out); }
-.moon-ring.full .disc { fill: rgba(169,133,74,.06); }   /* 婚礼当天：真的变成一轮满月 */
+/* 默认状态 = 终态：一轮满月，金线闭合、月面已亮。
+   脚本挂掉 / 不支持 IntersectionObserver 的浏览器看到的就是这个，
+   而不是一个画了一半的残圈。 */
+.moon-ring .disc { fill: rgba(169,133,74,.06); transition: fill var(--d-slow) var(--e-out); }
 .moon-ring .track { fill: none; stroke: var(--gold-soft); stroke-width: 1; }
 .moon-ring .prog {
   fill: none; stroke: var(--gold); stroke-width: 1.25; stroke-linecap: butt;
   transition: stroke-dashoffset var(--d-ring) var(--e-out);
 }
+/* 脚本在跑的时候才把月退回起点：空环、暗面。289.03 = 2πr（r=46），
+   跟 HTML 里的 stroke-dasharray 是同一个数，改要两边一起改。
+
+   起点必须【瞬间】就位，所以这里先把过渡关掉 —— 上面那两行给的是终态，
+   html.js 一加就是一次值变化，过渡开着的话月环会当场从满月倒着退成空环，
+   1.6 秒的倒放。等这一屏进视口，JS 挂上 .armed 把过渡装回去，再把
+   stroke-dashoffset 打成 0：金线绕满一周，随后 .full 让月面亮起，两拍。 */
+html.js .moon-ring .prog { stroke-dashoffset: 289.03; transition: none; }
+html.js .moon-ring .disc { fill: transparent; transition: none; }
+html.js .moon-ring.armed .prog { transition: stroke-dashoffset var(--d-ring) var(--e-out); }
+html.js .moon-ring.armed .disc { transition: fill var(--d-slow) var(--e-out); }
+html.js .moon-ring.full .disc { fill: rgba(169,133,74,.06); }
 .moon-ring .mid {
   position: absolute; inset: 0; display: flex;
   flex-direction: column; align-items: center; justify-content: center;
@@ -443,10 +457,9 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
   writing-mode: vertical-rl; text-orientation: upright;
   font-size: var(--fs-h2); letter-spacing: .3em; color: var(--red-ink); line-height: 1;
 }
+/* 此刻整块没人用 —— 标题「中式 · 婚书」和「中式礼服」那句都删了。
+   留着是因为敬茶时段还待填，补那一行的人不该还得再写一遍样式。 */
 .rite-foot { text-align: center; margin-top: 26px; }
-.rite-foot h2 { font-size: var(--fs-h2); font-weight: 600; letter-spacing: .2em; }
-/* 此刻没有 <p> 用它 —— 「中式礼服」那句删了。留着是因为敬茶时段还待填，
-   补那一行的人不该还得再写一遍样式。 */
 .rite-foot p { font-size: var(--fs-body); color: var(--red-gold); margin-top: 10px; line-height: 1.85; }
 
 /* ---------------------------------------------------- 屏 9/10 红底上的纸
