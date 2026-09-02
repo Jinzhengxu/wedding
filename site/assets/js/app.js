@@ -163,8 +163,13 @@
 
   // 月环。从前它画的是「一年走到今天」的进度，只有婚礼当天才闭合成满月 ——
   // 而那天没人会专门打开请柬来看，等于这个设计谁也看不见。现在改成：
-  // 谁划到这一屏，就当着谁的面合上。金线绕满一周（--d-ring），再让月面亮起。
+  // 谁划到这一屏，月亮就当着谁的面合上，而且是【跟着手指】合的。
   // 环不再承载「还剩多久」的信息了 —— 那件事环心的数字一直在说，说得比环准。
+  //
+  // 两条路，能力判定选一条，选定之后另一条一步都不走：
+  //   scrub  支持 animation-timeline: view() —— 整段交给 CSS，滑多少合多少，
+  //          停手就停住，往回滑就往回退。合成器驱动，没有一个 scroll 回调。
+  //   timed  老浏览器 —— 进视口后自己走 1.6 秒。终态跟 scrub 一模一样。
   var RING_MS = 1600;   // 跟 style.css 的 --d-ring 一致；只是 transitionend 的兜底，差几十毫秒无妨
   if (prog) {
     var lit = function () { if (ring) ring.classList.add('full'); };
@@ -185,8 +190,14 @@
       };
       if (window.requestAnimationFrame) requestAnimationFrame(go); else setTimeout(go, 32);
     };
+    var scrub = false;
+    try {
+      scrub = !lite && !!(window.CSS && CSS.supports && CSS.supports('animation-timeline', 'view()'));
+    } catch (e) {}
+
     // 降级路径：html.lite 把 transition 全禁了，这里设值即到位，直接就是满月。
     if (lite) { prog.style.strokeDashoffset = '0'; lit(); }
+    else if (scrub) { ring.classList.add('scrub'); }   // 剩下的全在 style.css 里，JS 不再插手
     else if ('IntersectionObserver' in window) {
       var ro = new IntersectionObserver(function (es) {
         es.forEach(function (e) { if (e.isIntersecting) { ro.unobserve(e.target); close(); } });

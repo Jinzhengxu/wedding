@@ -355,6 +355,15 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
   margin: -14% auto 0; z-index: 1;
 }
 .moon-ring svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
+/* 光晕：亮在金线外侧，往外化开，中心留给月面自己的那层淡金。
+   一层渐变搞定，不用 filter —— 见 index.html 里那段注释。 */
+.moon-glow {
+  position: absolute; inset: -16%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(169,133,74,.07) 0%,  rgba(169,133,74,.06) 28%,   /* 月面自己的一点光 */
+    rgba(169,133,74,.12) 36%, rgba(169,133,74,.20) 40%,   /* 金线那一圈最亮 */
+    rgba(169,133,74,.08) 50%, rgba(169,133,74,0)   68%);  /* 往外化开到没有 */
+}
 /* 默认状态 = 终态：一轮满月，金线闭合、月面已亮。
    脚本挂掉 / 不支持 IntersectionObserver 的浏览器看到的就是这个，
    而不是一个画了一半的残圈。 */
@@ -373,9 +382,53 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
    stroke-dashoffset 打成 0：金线绕满一周，随后 .full 让月面亮起，两拍。 */
 html.js .moon-ring .prog { stroke-dashoffset: 289.03; transition: none; }
 html.js .moon-ring .disc { fill: transparent; transition: none; }
+html.js .moon-ring .moon-glow { opacity: 0; transition: none; }
 html.js .moon-ring.armed .prog { transition: stroke-dashoffset var(--d-ring) var(--e-out); }
 html.js .moon-ring.armed .disc { transition: fill var(--d-slow) var(--e-out); }
+html.js .moon-ring.armed .moon-glow { transition: opacity var(--d-ring) var(--e-out); }
 html.js .moon-ring.full .disc { fill: rgba(169,133,74,.06); }
+html.js .moon-ring.full .moon-glow { opacity: 1; }
+
+/* ------------------------------------------------------- 月环跟着手指走
+   view() 时间线由合成器驱动，不经过 scroll 事件 —— 这是本站「不用 scroll
+   驱动动画」那条铁律唯一的合法出口：X5 惯性滑动期间 scroll 回调节流极粗，
+   而这里根本没有回调。手指往下滑，月亮从屏幕下沿升上来，一点点合拢，
+   升到屏幕正中时恰好合成满月，光晕随之涨起来 —— 停手就停在半路，
+   往回滑就往回退，全程跟着手指。
+
+   进度按 cover 算（元素从下沿进、到上沿出为 0%→100%）：
+     8% → 46%   金线从空绕到满（46% 差不多就是升到屏幕正中那一刻）
+     40% → 56%  月面亮起，比金线晚一点，先合拢再亮
+     38% → 62%  光晕涨起来，中途稍微涨过一点再落回，是「亮起来」那一下
+
+   不支持 view() 的浏览器（老 X5、老 Safari）走下面 JS 里那条：
+   进视口后自己走 1.6 秒，终态一模一样。 */
+@supports (animation-timeline: view()) {
+  /* 注意顺序：animation 简写会把 animation-timeline 重置成 auto，
+     所以 animation-timeline 必须写在简写后面，写反了整段就不跑。 */
+  html.js .moon-ring.scrub .prog {
+    animation: moon-close linear both;
+    animation-timeline: view();
+    animation-range: cover 8% cover 46%;
+  }
+  html.js .moon-ring.scrub .disc {
+    animation: moon-face linear both;
+    animation-timeline: view();
+    animation-range: cover 40% cover 56%;
+  }
+  html.js .moon-ring.scrub .moon-glow {
+    animation: moon-halo linear both;
+    animation-timeline: view();
+    animation-range: cover 38% cover 62%;
+  }
+}
+@keyframes moon-close { from { stroke-dashoffset: 289.03; } to { stroke-dashoffset: 0; } }
+@keyframes moon-face  { from { fill: rgba(169,133,74,0); } to { fill: rgba(169,133,74,.06); } }
+@keyframes moon-halo {
+  0%   { opacity: 0; transform: scale(.9); }
+  70%  { opacity: 1; transform: scale(1.05); }   /* 涨过一点 */
+  100% { opacity: 1; transform: scale(1); }      /* 再落回来坐住 */
+}
 .moon-ring .mid {
   position: absolute; inset: 0; display: flex;
   flex-direction: column; align-items: center; justify-content: center;

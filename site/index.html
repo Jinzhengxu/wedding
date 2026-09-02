@@ -203,6 +203,9 @@
   </div>
 
   <div class="moon-ring" id="ring">
+    <!-- 满月的光晕。一层径向渐变，不是 filter: blur —— blur 是 X5 上掉帧的
+         头号来源，而这一层只动 opacity 和 transform，两样都在合成器上跑。 -->
+    <div class="moon-glow" aria-hidden="true"></div>
     <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
       <circle class="disc" cx="50" cy="50" r="46"/>
       <circle class="track" cx="50" cy="50" r="46"/>
