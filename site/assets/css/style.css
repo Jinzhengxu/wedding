@@ -596,7 +596,20 @@ html.js.motion .seal { animation: stamp 220ms var(--e-seal) both; }
 #foot .fam  { font-size: var(--fs-lead); font-weight: 500; letter-spacing: .16em; }
 #foot .sign { margin-top: 30px; }
 #foot .fam  { margin-top: 12px; }
-#foot .meta { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--red-gold); margin-top: 14px; }
+/* 日期地点这行原先写死了 --f-sans，夹在上面两行落款和下面「恭候诸亲光临」中间，
+   是这一屏唯一的黑体 —— 四行连着读，就它换了张脸。去掉 font-family 让它跟着
+   body 继承 --f-serif，页脚从头到尾一种字体。
+
+   只换字体，不动别的：仍是 note(15px)、仍是 red-gold —— 日期地点本来就该比
+   落款和「恭候诸亲光临」退一档，靠字号和颜色分主次，不靠换字体。
+
+   字距保持 normal，不跟落款那样拉 .16em：这行 18 个字，15px 无字距是 260px，
+   而 320px 屏上页脚内宽只有 280px（padding 20px），拉 .1em 就是 287px，断行。
+   .05em 塞得下但只剩 6px，不值得为一行次要信息赌窄屏。
+
+   换字体本身不加宽：中日韩字在宋体和黑体里同样是全角 1em。实测反而窄了 10px
+   —— 中间那个「·」在黑体里被当全角排，回到宋体是半角。 */
+#foot .meta { font-size: var(--fs-note); color: var(--red-gold); margin-top: 14px; }
 #foot .last { font-size: var(--fs-lead); letter-spacing: .18em; margin-top: 26px; }
 #foot .credit { font-family: var(--f-sans); font-size: .75rem; color: rgba(217,190,134,.5); margin-top: 32px; line-height: 1.8; }
 
