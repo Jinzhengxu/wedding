@@ -15,13 +15,24 @@
     python3 tools/build-fonts.py              # 扫描 site/ 下 HTML/CSS 里的静态中文
     python3 tools/build-fonts.py --dry-run    # 只打印将要请求的字符集，不下载
 
-产物：
-    site/assets/fonts/serif-sc.woff2
-    site/assets/fonts/garamond.woff2
+产物（文件名里带内容哈希，见下）：
+    site/assets/fonts/serif-sc.<hash>.woff2
+    site/assets/fonts/garamond.<hash>.woff2
     site/assets/fonts/fonts.css
+并就地改写 site/ 下每张页面里那行 <link rel="preload">，指向新的哈希文件名
+（婚礼页和生成的回门页一起改，构建顺序不用变，还是 build-pages -> build-fonts）。
+
+为什么文件名要带哈希：
+  这个脚本每次都按页面上【实际出现的字】重新烧一份子集，同一个文件名，
+  内容却随文案变。而 woff2 在 server.js 里吃的是 max-age=31536000。
+  两件事撞在一起出过一个一年不会自愈的 bug：早期访客缓存了一份 372 字的旧子集，
+  后来文案里新添的「设宪举建伟夫妇」不在其中，浏览器逐字回退到系统字体 ——
+  一行宋体里蹦出七个黑体字。名字带上内容哈希，改了字就是新 URL，旧缓存自然作废。
 """
 
 import argparse
+import glob
+import hashlib
 import os
 import re
 import urllib.parse
@@ -117,13 +128,10 @@ def fetch_css(family, weights, text):
         return r.read().decode("utf-8")
 
 
-def download(url, dest):
+def download(url):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=90) as r:
-        data = r.read()
-    with open(dest, "wb") as f:
-        f.write(data)
-    return len(data)
+        return r.read()
 
 
 BLOCK_RE = re.compile(
@@ -135,6 +143,39 @@ def harvest(css):
     for w, url in BLOCK_RE.findall(css):
         out.setdefault(int(w), url)
     return out
+
+
+PRELOAD_RE = re.compile(r'(<link rel="preload" href="/?assets/fonts/)serif-sc[^"]*\.woff2(")')
+
+
+def rewrite_preload(fn):
+    """把每张页面里那行 <link rel="preload"> 指到新的哈希文件名上。
+
+    preload 的 href 必须跟 fonts.css 里 @font-face 的 src 【一模一样】，
+    差一个字符浏览器就会下两份字体，控制台还甩一条 preload 没被用上的警告。
+    与其让人手改，不如烧字体的时候顺手改掉 —— 少一个会忘的步骤。
+
+    生成页（site/huimen/index.html）也一起改，而不是等 build-pages.py 再跑一遍：
+    构建顺序是 build-pages -> build-fonts（子集要扫生成页上的字，见 README），
+    如果这里只改婚礼页，就得再回头跑一次 build-pages，多一个会忘的步骤，
+    而且 deploy.sh 的 --check 会因为两页不一致直接把部署拦下来。
+    两页写同一个哈希，--check 依旧过得去。"""
+    if not fn:
+        raise SystemExit("!! 没拿到 serif-sc 的文件名，preload 没法改")
+    hit = 0
+    for p in sorted(glob.glob(os.path.join(SITE, "**", "index.html"), recursive=True)):
+        with open(p, encoding="utf-8") as f:
+            src = f.read()
+        new, n = PRELOAD_RE.subn(r"\g<1>%s\g<2>" % fn, src)
+        if n == 0:
+            continue
+        hit += 1
+        if new != src:
+            with open(p, "w", encoding="utf-8") as f:
+                f.write(new)
+            print("  %s preload -> %s" % (os.path.relpath(p, ROOT), fn))
+    if hit == 0:
+        raise SystemExit("!! site/ 下没找到那行字体 preload，改不动")
 
 
 def main():
@@ -155,10 +196,15 @@ def main():
 
     css_lines = ["/* 构建产物 —— 由 tools/build-fonts.py 生成，请勿手改 */"]
     total = [0]
+    written = []          # 这一轮真正写出的 woff2 文件名
+    preload = [None]      # 要写进 index.html 那行 preload 的文件名
 
     def pull(family, weights, text, stem):
         """拉一个字族的子集。Google 返回的是可变字体，多个字重共用同一个文件，
-        所以按 URL 去重，一个文件配一条带字重区间的 @font-face。"""
+        所以按 URL 去重，一个文件配一条带字重区间的 @font-face。
+
+        文件名带内容哈希：同样的字烧出同样的名字（改一行注释不会白白换 URL），
+        字变了名字才变，于是浏览器那份 max-age=31536000 的旧缓存自动失效。"""
         urls = harvest(fetch_css(family, weights, text))
         if not urls:
             raise SystemExit("!! 没能从 Google Fonts 拿到 %s 的字体 URL" % family)
@@ -166,21 +212,35 @@ def main():
         for w, u in urls.items():
             groups.setdefault(u, []).append(w)
         for url, ws in sorted(groups.items(), key=lambda kv: min(kv[1])):
-            name = stem if len(groups) == 1 else "%s-%d" % (stem, min(ws))
-            n = download(url, os.path.join(FONT_DIR, name + ".woff2"))
-            total[0] += n
+            stem_w = stem if len(groups) == 1 else "%s-%d" % (stem, min(ws))
+            data = download(url)
+            fn = "%s.%s.woff2" % (stem_w, hashlib.sha1(data).hexdigest()[:8])
+            with open(os.path.join(FONT_DIR, fn), "wb") as f:
+                f.write(data)
+            written.append(fn)
+            if stem == "serif-sc" and preload[0] is None:
+                preload[0] = fn
+            total[0] += len(data)
             rng = "%d %d" % (min(ws), max(ws)) if min(ws) != max(ws) else str(min(ws))
-            print("  %s.woff2  %.1f KB   字重 %s" % (name, n / 1024, rng))
+            print("  %-28s %6.1f KB   字重 %s" % (fn, len(data) / 1024, rng))
             css_lines.append(
                 "@font-face{font-family:'%s';font-style:normal;font-weight:%s;"
-                "font-display:swap;src:url(%s.woff2) format('woff2')}"
-                % (FAMILY_CSS[stem], rng, name))
+                "font-display:swap;src:url(%s) format('woff2')}"
+                % (FAMILY_CSS[stem], rng, fn))
 
     pull("Noto+Serif+SC", [300, 400, 600], cjk, "serif-sc")
     pull("EB+Garamond", [400, 500], latin, "garamond")
 
     with open(os.path.join(FONT_DIR, "fonts.css"), "w", encoding="utf-8") as f:
         f.write("\n".join(css_lines) + "\n")
+
+    # 上一轮的哈希文件留在目录里只会跟着镜像一起发出去，白占体积。
+    for old in glob.glob(os.path.join(FONT_DIR, "*.woff2")):
+        if os.path.basename(old) not in written:
+            os.remove(old)
+            print("  删除旧子集 %s" % os.path.basename(old))
+
+    rewrite_preload(preload[0])
 
     print("\n合计 %.1f KB  ->  %s" % (total[0] / 1024, FONT_DIR))
     print("提醒：子集只覆盖静态标题文案；留言墙等用户输入内容走系统字体。")

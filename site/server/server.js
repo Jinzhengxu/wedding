@@ -423,11 +423,23 @@ async function serveStatic(req, res, url) {
   const etag = `W/"${stat.size}-${stat.mtimeMs.toString(36)}"`;
   if (req.headers['if-none-match'] === etag) return send(res, 304, '');
 
-  // 图片/字体/音频内容稳定，长缓存。
-  // HTML / CSS / JS 一律 no-cache：不是不缓存，是每次带 ETag 校验，没变就 304。
-  // 新人改一行文案之后，亲友拿到的是旧样式表 —— 这个代价比一次 304 大得多。
-  const immutable = ['.webp', '.jpg', '.jpeg', '.png', '.woff2', '.woff', '.mp3', '.m4a'].includes(ext);
-  const cache = immutable ? 'public, max-age=31536000' : 'no-cache';
+  // 长缓存只给两种文件：内容永不会变的原始素材（照片、音频 —— 换一张就是换文件名），
+  // 以及文件名里带内容哈希的构建产物（assets/fonts/serif-sc.<8位哈希>.woff2）。
+  // 其余一律 no-cache：不是不缓存，是每次带 ETag 校验，没变就 304。
+  //
+  // 【文件名固定、内容却会变】的东西绝不能进长缓存。喜帖图就是这样一个：
+  // invite-card*.jpg 由 tools/build-cards.py 把日期、落款、「午时设宴」烧进像素，
+  // 改一句文案图就变了，名字还是那个名字。
+  //
+  // 这条规矩是拿一个真 bug 换来的。字体子集从前也吃 max-age=31536000，
+  // 而 tools/build-fonts.py 每次都按页面上实际出现的字重新烧一份【同名】 woff2。
+  // 早期访客缓存下一份只有 372 个字的旧子集，此后文案里新添的「设宪举建伟夫妇」
+  // 不在其中，浏览器就逐字回退到系统字体 —— 一行宋体里蹦出七个黑体字，
+  // 而且这份缓存挂着一年的寿命，自己不会好。带上哈希，改了字就是新 URL。
+  const rawAsset = ['.webp', '.jpg', '.jpeg', '.png', '.mp3', '.m4a'].includes(ext)
+    && !/\/invite-card[^/]*$/.test(rel);
+  const hashedFont = /\.[0-9a-f]{8}\.woff2?$/.test(rel);
+  const cache = (rawAsset || hashedFont) ? 'public, max-age=31536000' : 'no-cache';
 
   const headers = {
     'Content-Type': MIME[ext] || 'application/octet-stream',
