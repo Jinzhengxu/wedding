@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#F5F3ED">
 <meta name="color-scheme" content="light">
 <title>金正旭 · 刘俊懿 回门宴</title>
-<meta name="description" content="2026年9月12日 星期六，农历丙午年八月初二，蒙阴天佑园大酒店。傍晚五点半开席，敬备喜筵，恭候光临。">
+<meta name="description" content="2026年9月12日 星期六，农历丙午年八月初二，蒙阴天佑园大酒店。傍晚五点半设宴，敬备喜筵，恭候光临。">
 
 <!-- 这两行是页面的「身份」：app.js 靠 ev-at 算倒计时和月环，靠 ev-key 分隔
      localStorage 的已回复状态和回执归属。改日期改这里，不要再去改 JS。 -->
@@ -221,7 +221,7 @@
     </div>
   </div>
 
-  <p class="sr-only" id="cdSr">回门宴日期：2026年9月12日 星期六 傍晚5点30分开席。</p>
+  <p class="sr-only" id="cdSr">回门宴日期：2026年9月12日 星期六 傍晚5点30分设宴。</p>
   <p class="when wrap">二〇二六年九月十二日　晚宴 <span class="lat">17:30</span></p>
 </section>
 
@@ -307,16 +307,12 @@
                  autocomplete="name" placeholder="如：三舅 / 王小明">
         </div>
 
-        <div class="fld">
-          <span class="lb" id="lbGo">您能来吗</span>
-          <div class="pick pick--2" role="radiogroup" aria-labelledby="lbGo" id="pickGo">
-            <button type="button" role="radio" aria-checked="true"  data-v="yes">准时赴宴</button>
-            <button type="button" role="radio" aria-checked="false" data-v="no" class="soft">恐怕来不了</button>
-          </div>
-          <input type="hidden" name="attending" id="rGo" value="yes">
-        </div>
+        <!-- 不问「您能来吗」：不来的人根本不会点开这张帖子，
+             这一问只会让准备赴宴的人先看见一个「恐怕来不了」的按钮。
+             回执一律记为出席（后台的到场人数统计还读这个字段）。 -->
+        <input type="hidden" name="attending" id="rGo" value="yes">
 
-        <div class="fld" id="fldGuests">
+        <div class="fld">
           <span class="lb" id="lbNum">一共来几位</span>
           <div class="step" aria-labelledby="lbNum">
             <button type="button" id="gMinus" aria-label="减少一位">−</button>
@@ -335,18 +331,6 @@
             <button type="button" role="radio" aria-checked="false" data-v="双方好友">双方好友</button>
           </div>
           <input type="hidden" name="side" id="rSide" value="">
-        </div>
-
-        <div class="fld">
-          <label class="lb" for="rPhone">手机号（选填）</label>
-          <input id="rPhone" name="phone" type="tel" inputmode="numeric" maxlength="20"
-                 autocomplete="tel" placeholder="只用于当天联系您">
-        </div>
-
-        <div class="fld">
-          <label class="lb" for="rNote">想说的话（选填）</label>
-          <textarea id="rNote" name="note" maxlength="200" rows="3"
-                    placeholder="忌口、要不要接站，或者只是想说两句"></textarea>
         </div>
 
         <div class="hp" aria-hidden="true">

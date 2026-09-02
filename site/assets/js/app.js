@@ -324,11 +324,8 @@
 
   // ------------------------------------------------------------ 回执
   var form = $('#rsvpForm'), doneBox = $('#rsvpDone'), rsvpMsg = $('#rsvpMsg');
-  var fldGuests = $('#fldGuests'), gNum = $('#gNum'), rGuests = $('#rGuests');
+  var gNum = $('#gNum'), rGuests = $('#rGuests');
 
-  radioGroup($('#pickGo'), $('#rGo'), function (v) {
-    if (fldGuests) fldGuests.hidden = (v === 'no');
-  });
   radioGroup($('#pickSide'), $('#rSide'));
 
   function setGuests(n) {
@@ -347,8 +344,10 @@
     doneBox.hidden = false;
     // 已经回过话了，就别再催「9 月 15 日前给我们回个信息」
     var why = $('#rsvpWhy'); if (why) why.hidden = true;
-    var bits = [rec.attending === 'no' ? '您选了：恐怕来不了' : '您选了：准时赴宴'];
-    if (rec.attending !== 'no' && rec.guests) bits.push('共 ' + rec.guests + ' 位');
+    // 'no' 只会出现在老回执里 —— 表单已经不问「您能来吗」了
+    var bits = [];
+    if (rec.attending === 'no') bits.push('您选了：恐怕来不了');
+    else if (rec.guests) bits.push('共 ' + rec.guests + ' 位');
     if (rec.side) bits.push(rec.side);
     $('#rsvpSum').textContent = bits.join(' · ');
   }
@@ -385,9 +384,7 @@
         name: name,
         attending: $('#rGo').value,
         guests: parseInt(rGuests.value, 10) || 1,
-        side: $('#rSide').value,
-        phone: $('#rPhone').value.trim(),
-        note: $('#rNote').value.trim()
+        side: $('#rSide').value
       };
 
       btn.disabled = true;

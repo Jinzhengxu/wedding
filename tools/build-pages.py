@@ -14,7 +14,7 @@
 
 index.html 里用 HTML 注释当锚点：
 
-    <p class="k hour"><!--ev:hour-->中午开席<!--/ev--></p>
+    <p class="k hour"><!--ev:hour-->午时设宴<!--/ev--></p>
 
 注释在浏览器里不显示，build-fonts.py 也会先剔注释再扫字，所以锚点
 既不上屏、也不进字体子集，对婚礼页本身零影响。

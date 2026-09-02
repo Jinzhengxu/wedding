@@ -25,7 +25,7 @@ python3 tools/build-fonts.py     # 再跑这个（新字要进子集）
 在 index.html 里用注释标成锚点：
 
 ```html
-<p class="k hour"><!--ev:hour-->中午开席<!--/ev--></p>
+<p class="k hour"><!--ev:hour-->午时设宴<!--/ev--></p>
 ```
 
 回门宴那 24 处的内容写在 `tools/events.json`。注释不上屏、也不进字体子集。
