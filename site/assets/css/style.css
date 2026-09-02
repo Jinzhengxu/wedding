@@ -30,6 +30,9 @@
   --moss:       #2C3F31;   /* 主按钮实底、focus 描边，对 paper 10.0:1 */
   --gold:       #A9854A;   /* 只用于线。对 paper 仅 3.1:1，永不承载文字 */
   --gold-soft:  rgba(169,133,74,.34);
+  /* 满月专用的黄：比 --gold 更黄、更亮、更饱和。金线是线，月是光，
+     两者本来就不该是同一个色。只用在第 6 屏的月面和光晕，别处不许用。 */
+  --moon:       229,171,45;
   --line:       rgba(31,42,34,.10);
 
   /* ---- 礼红半页。--red 取自 P5 底边实测色，让 contain 的接缝看不见 ---- */
@@ -88,7 +91,7 @@
   :root {
     --paper:#F5F3ED; --mat:#FBFAF6; --ink:#1F2A22; --ink-2:#566056;
     --moss:#2C3F31; --gold:#A9854A; --gold-soft:rgba(169,133,74,.34);
-    --line:rgba(31,42,34,.10);
+    --moon:229,171,45; --line:rgba(31,42,34,.10);
     --red:#7B0709; --red-top:#5C0203; --red-ink:#F6F1E6; --red-gold:#D9BE86;
     --red-line:rgba(217,190,134,.30); --cinnabar:#9E2B25;
   }
@@ -360,14 +363,21 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 .moon-glow {
   position: absolute; inset: -16%; border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle at 50% 50%,
-    rgba(169,133,74,.07) 0%,  rgba(169,133,74,.06) 28%,   /* 月面自己的一点光 */
-    rgba(169,133,74,.12) 36%, rgba(169,133,74,.20) 40%,   /* 金线那一圈最亮 */
-    rgba(169,133,74,.08) 50%, rgba(169,133,74,0)   68%);  /* 往外化开到没有 */
+    rgba(var(--moon),.14) 0%,  rgba(var(--moon),.13) 28%,   /* 月面自己的光 */
+    rgba(var(--moon),.22) 36%, rgba(var(--moon),.34) 40%,   /* 金线那一圈最亮 */
+    rgba(var(--moon),.13) 50%, rgba(var(--moon),0)   68%);  /* 往外化开到没有 */
 }
 /* 默认状态 = 终态：一轮满月，金线闭合、月面已亮。
    脚本挂掉 / 不支持 IntersectionObserver 的浏览器看到的就是这个，
    而不是一个画了一半的残圈。 */
-.moon-ring .disc { fill: rgba(169,133,74,.06); transition: fill var(--d-slow) var(--e-out); }
+/* 两行 fill 不是手滑：var() 万一解析不了（老到不支持自定义属性的内核），
+   SVG 的 fill 会退到默认值【黑色】，月面直接变成一枚黑饼。
+   前一行是给那种浏览器的普通值，后一行才是正常路径。 */
+.moon-ring .disc {
+  fill: rgba(229,171,45,.16);
+  fill: rgba(var(--moon),.16);
+  transition: fill var(--d-slow) var(--e-out);
+}
 .moon-ring .track { fill: none; stroke: var(--gold-soft); stroke-width: 1; }
 .moon-ring .prog {
   fill: none; stroke: var(--gold); stroke-width: 1.25; stroke-linecap: butt;
@@ -386,7 +396,7 @@ html.js .moon-ring .moon-glow { opacity: 0; transition: none; }
 html.js .moon-ring.armed .prog { transition: stroke-dashoffset var(--d-ring) var(--e-out); }
 html.js .moon-ring.armed .disc { transition: fill var(--d-slow) var(--e-out); }
 html.js .moon-ring.armed .moon-glow { transition: opacity var(--d-ring) var(--e-out); }
-html.js .moon-ring.full .disc { fill: rgba(169,133,74,.06); }
+html.js .moon-ring.full .disc { fill: rgba(229,171,45,.16); fill: rgba(var(--moon),.16); }
 html.js .moon-ring.full .moon-glow { opacity: 1; }
 
 /* ------------------------------------------------------- 月环跟着手指走
@@ -397,9 +407,10 @@ html.js .moon-ring.full .moon-glow { opacity: 1; }
    往回滑就往回退，全程跟着手指。
 
    进度按 cover 算（元素从下沿进、到上沿出为 0%→100%）：
-     8% → 46%   金线从空绕到满（46% 差不多就是升到屏幕正中那一刻）
-     40% → 56%  月面亮起，比金线晚一点，先合拢再亮
-     38% → 62%  光晕涨起来，中途稍微涨过一点再落回，是「亮起来」那一下
+     8% → 40%   金线从空绕到满（40% 时月亮还在屏幕下半，满得早一点，
+                然后整轮满月再往上走过屏幕中央）
+     34% → 50%  月面亮起，比金线晚一点，先合拢再亮
+     32% → 56%  光晕涨起来，中途稍微涨过一点再落回，是「亮起来」那一下
 
    不支持 view() 的浏览器（老 X5、老 Safari）走下面 JS 里那条：
    进视口后自己走 1.6 秒，终态一模一样。 */
@@ -409,21 +420,21 @@ html.js .moon-ring.full .moon-glow { opacity: 1; }
   html.js .moon-ring.scrub .prog {
     animation: moon-close linear both;
     animation-timeline: view();
-    animation-range: cover 8% cover 46%;
+    animation-range: cover 8% cover 40%;
   }
   html.js .moon-ring.scrub .disc {
     animation: moon-face linear both;
     animation-timeline: view();
-    animation-range: cover 40% cover 56%;
+    animation-range: cover 34% cover 50%;
   }
   html.js .moon-ring.scrub .moon-glow {
     animation: moon-halo linear both;
     animation-timeline: view();
-    animation-range: cover 38% cover 62%;
+    animation-range: cover 32% cover 56%;
   }
 }
 @keyframes moon-close { from { stroke-dashoffset: 289.03; } to { stroke-dashoffset: 0; } }
-@keyframes moon-face  { from { fill: rgba(169,133,74,0); } to { fill: rgba(169,133,74,.06); } }
+@keyframes moon-face  { from { fill: rgba(var(--moon),0); } to { fill: rgba(var(--moon),.16); } }
 @keyframes moon-halo {
   0%   { opacity: 0; transform: scale(.9); }
   70%  { opacity: 1; transform: scale(1.05); }   /* 涨过一点 */
