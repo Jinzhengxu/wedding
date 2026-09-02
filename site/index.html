@@ -118,47 +118,66 @@
 </section>
 
 
-<!-- ==================================== 屏 3–5 · 相册（窄 → 出血 → 满宽）
-     呼吸感来自版式变化，不来自任何装饰元素。 -->
-<figure class="plate plate--narrow wrap reveal">
-  <div class="ph lq-p2-studio">
-    <picture>
-      <source type="image/webp"
-              srcset="assets/img/p2-studio-480.webp 480w, assets/img/p2-studio-750.webp 750w"
-              sizes="(min-width:560px) 460px, 82vw">
-      <img src="assets/img/p2-studio-750.jpg" width="750" height="1125"
-           alt="灰墙前的全身合影，新娘白缎大拖尾婚纱" loading="lazy" decoding="async">
-    </picture>
-  </div>
-  <figcaption class="cap">一袭白纱　长裙曳地</figcaption>
-</figure>
+<!-- ======================================== 屏 3 · 相册（横向一格一格翻）
+     从前这里是三张竖着摞成的三屏。三张的地位是并列的，没有先后 ——
+     并列的东西横着放：一屏就看完，纵向省下两屏多。
 
-<figure class="plate plate--bleed reveal">
-  <div class="ph bleed lq-p3-close">
-    <picture>
-      <source type="image/webp"
-              srcset="assets/img/p3-close-750.webp 750w, assets/img/p3-close-1080.webp 1080w"
-              sizes="100vw">
-      <img src="assets/img/p3-close-750.jpg" width="750" height="500"
-           alt="半身特写，前景是垂坠的绿蕨与白玫瑰捧花" loading="lazy" decoding="async">
-    </picture>
-  </div>
-  <figcaption class="cap">花开正好</figcaption>
-</figure>
+     用原生 scroll-snap，不引 swiper。X5 的惯性滑动是内核给的，
+     任何用 touchmove + transform 自己写的滑动都比它涩，还容易把纵向滚动一起吃掉。
+     脚本整个挂掉时这里照样能划 —— 只是下面的圆点不亮。
 
-<figure class="plate plate--full wrap reveal">
-  <div class="ph lq-p4-arch">
-    <picture>
-      <source type="image/webp"
-              srcset="assets/img/p4-arch-480.webp 480w, assets/img/p4-arch-750.webp 750w"
-              sizes="(min-width:560px) 560px, 100vw">
-      <img src="assets/img/p4-arch-750.jpg" width="750" height="1125"
-           alt="户外白色尖拱门下的合影，超长头纱铺在草地上"
-           style="object-position:50% 30%" loading="lazy" decoding="async">
-    </picture>
+     右边永远露出下一张的一条边。微信里没有 hover，
+     这条边是唯一能让人知道「还能往右划」的东西，比写一行「滑动查看」管用。 -->
+<section id="album" class="reveal" aria-label="婚纱照">
+  <div class="reel" id="reel">
+    <figure class="shot">
+      <div class="ph lq-p2-studio">
+        <picture>
+          <source type="image/webp"
+                  srcset="assets/img/p2-studio-480.webp 480w, assets/img/p2-studio-750.webp 750w"
+                  sizes="(min-width:560px) 420px, 84vw">
+          <img src="assets/img/p2-studio-750.jpg" width="750" height="1125"
+               alt="灰墙前的全身合影，新娘白缎大拖尾婚纱" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="cap">一袭白纱　长裙曳地</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <!-- 五张里唯一的横图。竖框里只能留中间一半，裁点定在捧花那一侧 -->
+      <div class="ph ph--wide lq-p3-close">
+        <picture>
+          <source type="image/webp"
+                  srcset="assets/img/p3-close-750.webp 750w, assets/img/p3-close-1080.webp 1080w"
+                  sizes="(min-width:560px) 420px, 84vw">
+          <img src="assets/img/p3-close-750.jpg" width="750" height="500"
+               alt="半身特写，前景是垂坠的绿蕨与白玫瑰捧花" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="cap">花开正好</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <div class="ph lq-p4-arch">
+        <picture>
+          <source type="image/webp"
+                  srcset="assets/img/p4-arch-480.webp 480w, assets/img/p4-arch-750.webp 750w"
+                  sizes="(min-width:560px) 420px, 84vw">
+          <img src="assets/img/p4-arch-750.jpg" width="750" height="1125"
+               alt="户外白色尖拱门下的合影，超长头纱铺在草地上"
+               style="object-position:50% 26%" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <figcaption class="cap">拱门下　长纱铺地</figcaption>
+    </figure>
   </div>
-  <figcaption class="cap">拱门下　长纱铺地</figcaption>
-</figure>
+
+  <!-- 圆点只报位置，不做点击跳转：一共三张，手指划过去比瞄准一个 6px 的点快。
+       第一颗在 HTML 里就是亮的 —— 脚本没跑起来时静态页也是对的。 -->
+  <div class="dots" id="dots" aria-hidden="true">
+    <i class="on"></i><i></i><i></i>
+  </div>
+</section>
 
 
 <!-- ======================================================= 屏 6 · 月相倒计时

@@ -86,6 +86,25 @@
     else { img.addEventListener('load', done); img.addEventListener('error', done); }
   });
 
+  // ------------------------------------------------------------ 相册横滑
+  // 圆点跟着手指走。不监听 scroll —— X5 惯性滑动期间 scroll 回调节流极粗，
+  // 圆点会一顿一顿地跳。改用以 .reel 自己为 root 的 IntersectionObserver，
+  // 再把 root 用 rootMargin 缩成正中一道窄条：压住这道条的那张就是当前那张。
+  // 这样宽屏上同时看得见两张时也不会两颗点一起亮。
+  var reel = $('#reel');
+  var dots = $$('#dots i');
+  if (reel && dots.length && 'IntersectionObserver' in window) {
+    var shots = $$('.shot', reel);
+    var mark = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        var i = shots.indexOf(e.target);
+        dots.forEach(function (d, j) { d.classList.toggle('on', j === i); });
+      });
+    }, { root: reel, rootMargin: '0px -45% 0px -45%', threshold: 0 });
+    shots.forEach(function (el) { mark.observe(el); });
+  }
+
   // ------------------------------------------------------------ 倒计时 + 月环
   // 日期【只】写在 HTML 的 <meta name="ev-at"> 里。婚礼页和回门页共用这一份 JS，
   // 从前这四行是写死的 2026-09-26 —— 那样回门页的倒计时会指着婚礼那天。

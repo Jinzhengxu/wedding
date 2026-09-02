@@ -193,6 +193,10 @@ WantedBy=multi-user.target
    一屏截得全（实测 573px）。亲戚不转链接，只截图发家族群。
 2. **金只做线。** 金永远不做填充、不做正文色、不做大色块。
 3. **最后一眼必须是红。** 中式 → 回执 → 留言 → 落款连续四屏红底，不切回纸白。
+4. **相册横滑，不竖着摞。** 三张婚纱照并列，没有先后，横着放一屏看完 ——
+   竖排要占三屏，整页从 8208px 缩到 7182px。用原生 `scroll-snap`，不引 swiper：
+   X5 的惯性滑动是内核给的，自己用 `touchmove` + `transform` 写的一定更涩。
+   右边永远露出下一张的一条边 —— 微信里没有 hover，那条边比任何提示文字都管用。
 
 禁止用的东西（都在微信 X5 内核或低端安卓上有具体代价）：
 `position:sticky`、`backdrop-filter`、`text-shadow`、`scroll-behavior:smooth`、

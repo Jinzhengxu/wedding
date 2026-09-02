@@ -292,21 +292,48 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 .btn--ghostred { background: transparent; border-color: var(--red-gold); color: var(--red-ink); }
 .btn[aria-disabled='true'], .btn:disabled { opacity: .55; pointer-events: none; }
 
-/* ============================================================ 相册三屏 */
-.plate { margin-top: var(--sec-gap); }
-.plate--narrow .ph { width: 82%; aspect-ratio: 3 / 4; }
-.plate--narrow .cap { width: 82%; }
-.plate--full .ph { aspect-ratio: 3 / 4; }
+/* =========================================================== 相册（横滑） */
+/* 三张并列的照片横着一格一格翻。原生 scroll-snap，没有第三方库：
+   X5 的惯性滑动是内核给的，自己用 touchmove + transform 写的一定比它涩。
 
-/* P3 是五张里唯一的横图，就让它做全篇唯一一次出血。
-   呼吸感来自版式变化（窄 → 出血 → 满宽），不来自任何装饰元素。 */
-.plate--bleed .ph { aspect-ratio: 4 / 3; }
-.plate--bleed .ph img { object-position: 64% 32%; }
-@media (min-width: 560px) {
-  .plate--bleed .ph { aspect-ratio: 3 / 2; }
-  .plate--bleed .ph img { object-position: 50% 40%; }
+   两个尺寸都用 vw 算，不用百分比 —— 百分比在 .shot 上的基准是 .reel 的
+   内容盒（已经减掉左右 padding），改 padding 就会连带把照片改窄。 */
+#album {
+  margin-top: var(--sec-gap);
+  /* 正文栏左边那条内缩，跟 .wrap 同一条对齐线 */
+  --gutter: max(var(--pad-x), calc((100vw - 560px) / 2));
+  /* 右边留 46px 露出下一张的边。宽屏上封顶，不然照片会顶到 500px 高 */
+  --shot-w: min(calc(100vw - var(--gutter) - 46px), 420px);
 }
-.plate--bleed .cap { width: var(--wrap); margin-inline: auto; }
+
+.reel {
+  display: flex; gap: 14px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  /* 横向惯性绝不能冒泡出去：在微信里那一下会被当成「返回上一页」的侧滑 */
+  overscroll-behavior-x: contain;
+  /* 右边多留一个 46px：不然最后一张滑到底也差一截对不上左边那条对齐线，
+     照片会跟下面的圆点错开 */
+  padding-inline: var(--gutter) calc(var(--gutter) + 46px);
+  scroll-padding-inline: var(--gutter);
+  /* 桌面上滚动条会在照片底下拉一道灰杠 */
+  scrollbar-width: none;
+}
+.reel::-webkit-scrollbar { display: none; }
+
+.shot { flex: 0 0 var(--shot-w); scroll-snap-align: start; margin: 0; }
+/* 统一 4:5：比 3:4 矮一档，那张横图进竖框时也少切一点 */
+.shot .ph { aspect-ratio: 4 / 5; }
+.shot .ph--wide img { object-position: 62% 30%; }
+.shot .cap { margin-top: 12px; }
+
+.dots { display: flex; gap: 9px; margin: 18px var(--gutter) 0; }
+.dots i {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--gold-soft);
+  transition: background-color var(--d-fast) var(--e-out), transform var(--d-fast) var(--e-out);
+}
+.dots i.on { background: var(--gold); transform: scale(1.4); }
 
 /* ======================================================= 屏 6 月相倒计时 */
 #moon { margin-top: var(--sec-gap); text-align: center; }
@@ -350,7 +377,9 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
   font-family: var(--f-sans); font-size: var(--fs-label);
   letter-spacing: .2em; color: var(--ink-2);
 }
-.go-facts .vl { font-size: var(--fs-key); font-weight: 600; line-height: 1.7; margin-top: 8px; }
+/* 600 在这一行上太重了：「蒙阴天佑园大酒店」这种密笔画的字，思源宋体半粗
+   会把字腔糊死，看着就不像宋体了。500 还压得住信息层级，笔形还在。 */
+.go-facts .vl { font-size: var(--fs-key); font-weight: 500; line-height: 1.7; margin-top: 8px; }
 .go-facts .vl.small { font-size: var(--fs-addr); font-weight: 400; }
 
 .go-tel { display: grid; gap: 10px; margin-top: 20px; }
