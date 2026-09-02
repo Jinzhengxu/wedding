@@ -265,16 +265,21 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
 .tie-card .addr { font-size: var(--fs-addr); color: var(--ink-2); line-height: 1.72; margin-top: 4px; }
 .tie-card .div { height: 1px; background: var(--line); margin: 16px 0; }
 .tie-card .salute { font-size: var(--fs-lead); letter-spacing: .14em; margin-top: 4px; }
-.tie-card .sign {
-  font-family: var(--f-sans); font-size: var(--fs-note);
-  color: var(--ink-2); letter-spacing: .1em; margin-top: 6px;
-}
-/* 落款两行：新人一行、男方双亲一行。同字号同颜色，只靠一点行距分开 ——
-   长辈的名字不该比新人的小一号，那是排版在替人分尊卑。 */
-.tie-card .fam {
-  font-family: var(--f-sans); font-size: var(--fs-note);
-  color: var(--ink-2); letter-spacing: .1em; margin-top: 4px;
-}
+/* 落款两行：新人「敬邀」一行、设宴一方双亲「谨订」一行。同宋体、同字号、
+   同字距、同颜色，只靠行距分开 —— 跟页脚那两行的处理一致。
+
+   这两行原先写死了 --f-sans，是整张帖芯里唯一的黑体：日期、「中午开席」、
+   「敬备喜筵」、「席设」、酒店名、地址全是宋体，落款却是黑体，一张卡上撞两种
+   字体，落款反而最扎眼。去掉 font-family 让它继承 --f-serif 就对了。
+
+   宽度不用担心：中日韩字在宋体和黑体里同样是全角 1em，换字体一个像素都不长。
+
+   字号仍是 note(15px)、颜色仍是 ink-2 —— 落款本来就该比「敬备喜筵」轻一档；
+   两行之间只差 2px 行距，长辈的名字不比新人的小一号，排版不替人分尊卑。 */
+.tie-card .sign,
+.tie-card .fam { font-size: var(--fs-note); color: var(--ink-2); letter-spacing: .1em; }
+.tie-card .sign { margin-top: 6px; }
+.tie-card .fam  { margin-top: 4px; }
 .tie-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 22px; }
 
 /* --------------------------------------------------------------- 按钮 */
