@@ -206,7 +206,7 @@ html.js .ph img.ready { opacity: 1; }
 /* 照片说明。从前这里是「一袭白纱　长裙曳地」那种四字标签 —— 照片里已经有的
    东西再用文字说一遍，等于没说，所以按标签来排：黑体、小一号、宽字距。
 
-   现在这三行是话，不是标签（「兜兜转转，最后还是你」），那就该跟着正文走：
+   现在这三行是话，不是标签（「一路相伴走来，把细碎的日子酿成浪漫」），那就该跟着正文走：
    宋体、note 号、字距只留一点点。一屏里凡是「在说话」的字都是宋体，
    黑体只留给真正的标签（日期下面那行小注、表单的字段名、留言的落款）。 */
 .cap {
@@ -561,11 +561,10 @@ html.js.motion .moon-ring.full .mid { opacity: 1; }
 .go-tel .who { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); }
 .go-tel .no { font-family: var(--f-latin); font-size: 1.15rem; letter-spacing: .06em; }
 
-.go-hint {
-  font-family: var(--f-sans); font-size: var(--fs-note);
-  color: var(--ink-2); line-height: 1.85; margin-top: 24px;
-}
-.go-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+/* 电话和导航是两组按钮，中间原先隔着一行小字提示。提示删了，
+   间距就得自己撑开 —— 还是 12px 的话，四个钮会连成一根，
+   分不清哪两个是打电话、哪两个是导航。 */
+.go-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 22px; }
 .go-nav .btn { min-height: 72px; }
 
 
