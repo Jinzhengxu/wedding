@@ -37,8 +37,8 @@
   --line:       rgba(31,42,34,.10);
 
   /* ---- 礼红半页。--red 取自 P5 底边实测色，让 contain 的接缝看不见 ---- */
-  --red:        #7B0709;
-  --red-top:    #5C0203;   /* P5 顶边实测色，红页背景的渐变起点 */
+  --red:        #7D0102;
+  --red-top:    #5C0202;   /* P5 顶边实测色，红页背景的渐变起点 */
   --red-ink:    #F6F1E6;
   --red-gold:   #D9BE86;
   --red-line:   rgba(217,190,134,.30);
@@ -93,7 +93,7 @@
     --paper:#F5F3ED; --mat:#FBFAF6; --ink:#1F2A22; --ink-2:#566056;
     --moss:#2C3F31; --gold:#A9854A; --gold-soft:rgba(169,133,74,.34);
     --moon:229,171,45; --moon-dark:#EEECE4; --line:rgba(31,42,34,.10);
-    --red:#7B0709; --red-top:#5C0203; --red-ink:#F6F1E6; --red-gold:#D9BE86;
+    --red:#7D0102; --red-top:#5C0202; --red-ink:#F6F1E6; --red-gold:#D9BE86;
     --red-line:rgba(217,190,134,.30); --cinnabar:#9E2B25;
   }
 }
@@ -418,7 +418,10 @@ html.js.motion .reveal.in .hair--c { animation: draw-x 640ms var(--e-out) 150ms 
 #moon { margin-top: var(--sec-gap); text-align: center; }
 .moon-band { position: relative; }
 .moon-band .ph { aspect-ratio: 16 / 9; }
-.moon-band .ph img { object-position: 50% 78%; }   /* P4 第二次裁切：铺地的长头纱 */
+.moon-band .ph img { object-position: 50% 92%; }   /* P4 第二次裁切：铺地的长头纱 */
+/* 92% 是量着照片定的：v2 的头纱铺在草地上，裙摆最低处落在 85% 上下。
+   往上退到 78% 就把新郎的皮鞋和裤脚一起框进来了 —— 那不是「月亮挂在纱上」，
+   那是把人拦腰截断。往下顶到 100% 皮鞋又从上沿回来了，92% 是唯一只剩纱和草的那一档。 */
 .moon-band::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(to bottom,

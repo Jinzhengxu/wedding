@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
 """
-生成两张构建期图片：
+生成分享用的图：
 
-1. share-400.jpg —— 微信分享缩略图。微信取页面里第一张 ≥300×300 的图，
+1. share-<ver>-400.jpg —— 微信分享缩略图。微信取页面里第一张 ≥300×300 的图，
    不认 og: 标签。用 P5 中式红裁方，第一眼就有喜气；白纱的反差留给点进来之后。
 
-2. invite-card.png (1080×1440) —— 可长按保存到相册的喜帖。
+2. og-<ver>-1200x630.jpg —— 认 og: 标签的那些地方（微博、Telegram、iMessage）
+   拿的是这张。用 P1 的头肩，横幅比例。
+
+3. invite-card.png (1080×1440) —— 可长按保存到相册的喜帖。
    中国人分享 H5 的真实方式是截图和长按保存，不是点分享按钮。
    运行时用 html2canvas 生成是错的（180KB，X5 上中文常渲染成方框），构建期烘焙。
 
-    python3 tools/build-cards.py
+前两张是照片裁出来的，吃 server.js 的一年长缓存，所以文件名里带版本号，
+换照片要跟着 build-photos.py 的 VER 一起改（理由见那个脚本的开头）。
+喜帖卡不带：日期和落款是烧进像素的，server.js 专门把 invite-card* 排除在长缓存外。
+
+    python3 tools/build-photos.py && python3 tools/build-cards.py
 """
 
 import os
@@ -53,19 +60,36 @@ def rule(d, cx, y, width, color=GOLD, h=2):
     d.rectangle([cx - width // 2, y, cx + width // 2, y + h - 1], fill=color)
 
 
+VER = "v2"   # 跟 tools/build-photos.py 的 VER 一致
+
+
 # ------------------------------------------------------------------ 分享方图
 def build_share():
-    src = ImageOps.exif_transpose(Image.open(os.path.join(
-        PICS, "e6045543dfefb11bbc66230fe7dade7a.jpeg"))).convert("RGB")
+    src = ImageOps.exif_transpose(Image.open(
+        os.path.join(PICS, "p5-red.png"))).convert("RGB")
     W, H = src.size
     # 取两人 + 右侧「婚书」立轴，方裁
     side = int(W * 0.98)
     x = (W - side) // 2
-    y = int(H * 0.12)
+    y = int(H * 0.10)
     sq = src.crop((x, y, x + side, y + side)).resize((400, 400), Image.LANCZOS)
-    p = os.path.join(IMG, "share-400.jpg")
+    p = os.path.join(IMG, "share-%s-400.jpg" % VER)
     sq.save(p, "JPEG", quality=88, optimize=True)
-    print("share-400.jpg      %6.1f KB" % (os.path.getsize(p) / 1024))
+    print("%-22s %6.1f KB" % (os.path.basename(p), os.path.getsize(p) / 1024))
+
+
+# ------------------------------------------------------------------ og 横幅
+def build_og():
+    """P1 的头肩横裁。用校正过的那份 —— og 卡片跟封面并排出现过，
+    一张偏粉一张象牙色会看出来。"""
+    src = Image.open(os.path.join(ROOT, "build", "_p1-corrected.jpg")).convert("RGB")
+    W, H = src.size
+    h = round(W * 630 / 1200)
+    top = int(H * 0.045)          # 两人的头顶在 7% 上下，上面留一线余白
+    band = src.crop((0, top, W, top + h)).resize((1200, 630), Image.LANCZOS)
+    p = os.path.join(IMG, "og-%s-1200x630.jpg" % VER)
+    band.save(p, "JPEG", quality=86, optimize=True, progressive=True)
+    print("%-22s %6.1f KB" % (os.path.basename(p), os.path.getsize(p) / 1024))
 
 
 # ------------------------------------------------------------------ 喜帖卡
@@ -182,5 +206,6 @@ def build_card(c):
 
 if __name__ == "__main__":
     build_share()
+    build_og()
     for _c in CARDS:
         build_card(_c)

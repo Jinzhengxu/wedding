@@ -22,17 +22,17 @@
 <!-- og:image / og:url 必须是绝对地址：抓取方（Telegram、飞书、Twitter）
      不一定带着页面 URL 去解析相对路径，写相对路径它们就抓不到图。 -->
 <!--ev:og-url--><meta property="og:url" content="https://wedding.ccswitch.online/"><!--/ev-->
-<meta property="og:image" content="https://wedding.ccswitch.online/assets/img/og-1200x630.jpg">
+<meta property="og:image" content="https://wedding.ccswitch.online/assets/img/og-v2-1200x630.jpg">
 
-<link rel="icon" href="assets/img/share-400.jpg">
+<link rel="icon" href="assets/img/share-v2-400.jpg">
 <link rel="preload" href="assets/fonts/serif-sc.a87d14c0.woff2" as="font" type="font/woff2" crossorigin>
 <!-- preload 必须带上 imagesrcset/imagesizes，否则浏览器按 srcset 另选一档，
      预载的那张白下（375px 屏在 DPR1 下选的是 480w，不是 750w）。 -->
 <link rel="preload" as="image" fetchpriority="high"
-      imagesrcset="assets/img/p1-vow-480.webp 480w,
-                   assets/img/p1-vow-750.webp 750w,
-                   assets/img/p1-vow-1080.webp 1080w"
-      imagesizes="100vw" href="assets/img/p1-vow-750.webp">
+      imagesrcset="assets/img/p1-vow-v2-480.webp 480w,
+                   assets/img/p1-vow-v2-750.webp 750w,
+                   assets/img/p1-vow-v2-1024.webp 1024w"
+      imagesizes="100vw" href="assets/img/p1-vow-v2-750.webp">
 <link rel="stylesheet" href="assets/fonts/fonts.css">
 <link rel="stylesheet" href="assets/css/lqip.css">
 <link rel="stylesheet" href="assets/css/style.css">
@@ -42,7 +42,7 @@
 <!-- 微信取页面里第一张 ≥300×300 的图当分享缩略图。
      用 P5 中式红：第一眼有喜气，白纱的反差留给点进来之后。
      必须保持被渲染（只是移出视口），display:none 会被跳过。 -->
-<img class="hp" src="assets/img/share-400.jpg" width="400" height="400"
+<img class="hp" src="assets/img/share-v2-400.jpg" width="400" height="400"
      alt="金正旭与刘俊懿" aria-hidden="true">
 
 <main>
@@ -53,11 +53,11 @@
     <div class="ph lq-p1-vow">
       <picture>
         <source type="image/webp"
-                srcset="assets/img/p1-vow-480.webp 480w,
-                        assets/img/p1-vow-750.webp 750w,
-                        assets/img/p1-vow-1080.webp 1080w"
+                srcset="assets/img/p1-vow-v2-480.webp 480w,
+                        assets/img/p1-vow-v2-750.webp 750w,
+                        assets/img/p1-vow-v2-1024.webp 1024w"
                 sizes="100vw">
-        <img src="assets/img/p1-vow-750.jpg" width="750" height="1125"
+        <img src="assets/img/p1-vow-v2-750.jpg" width="750" height="1125"
              alt="金正旭与刘俊懿额头相抵，共捧一束白色马蹄莲"
              fetchpriority="high" decoding="async">
       </picture>
@@ -134,9 +134,9 @@
       <div class="ph lq-p2-studio">
         <picture>
           <source type="image/webp"
-                  srcset="assets/img/p2-studio-480.webp 480w, assets/img/p2-studio-750.webp 750w"
+                  srcset="assets/img/p2-studio-v2-480.webp 480w, assets/img/p2-studio-v2-750.webp 750w"
                   sizes="(min-width:560px) 420px, 84vw">
-          <img src="assets/img/p2-studio-750.jpg" width="750" height="1125"
+          <img src="assets/img/p2-studio-v2-750.jpg" width="750" height="1125"
                alt="灰墙前的全身合影，新娘白缎大拖尾婚纱" loading="lazy" decoding="async">
         </picture>
       </div>
@@ -148,9 +148,9 @@
       <div class="ph ph--wide lq-p3-close">
         <picture>
           <source type="image/webp"
-                  srcset="assets/img/p3-close-750.webp 750w, assets/img/p3-close-1080.webp 1080w"
+                  srcset="assets/img/p3-close-v2-750.webp 750w, assets/img/p3-close-v2-1080.webp 1080w"
                   sizes="(min-width:560px) 420px, 84vw">
-          <img src="assets/img/p3-close-750.jpg" width="750" height="500"
+          <img src="assets/img/p3-close-v2-750.jpg" width="750" height="500"
                alt="半身特写，前景是垂坠的绿蕨与白玫瑰捧花" loading="lazy" decoding="async">
         </picture>
       </div>
@@ -161,9 +161,9 @@
       <div class="ph lq-p4-arch">
         <picture>
           <source type="image/webp"
-                  srcset="assets/img/p4-arch-480.webp 480w, assets/img/p4-arch-750.webp 750w"
+                  srcset="assets/img/p4-arch-v2-480.webp 480w, assets/img/p4-arch-v2-750.webp 750w"
                   sizes="(min-width:560px) 420px, 84vw">
-          <img src="assets/img/p4-arch-750.jpg" width="750" height="1125"
+          <img src="assets/img/p4-arch-v2-750.jpg" width="750" height="1127"
                alt="户外白色尖拱门下的合影，超长头纱铺在草地上"
                style="object-position:50% 26%" loading="lazy" decoding="async">
         </picture>
@@ -199,8 +199,8 @@
          这次取铺地的长头纱 —— 月亮挂在纱上。 -->
     <div class="ph lq-p4-arch">
       <picture>
-        <source type="image/webp" srcset="assets/img/p4-arch-750.webp" sizes="100vw">
-        <img src="assets/img/p4-arch-750.jpg" width="750" height="422"
+        <source type="image/webp" srcset="assets/img/p4-arch-v2-750.webp" sizes="100vw">
+        <img src="assets/img/p4-arch-v2-750.jpg" width="750" height="422"
              alt="" aria-hidden="true" loading="lazy" decoding="async">
       </picture>
     </div>
@@ -292,9 +292,9 @@
   <div class="ph lq-p5-red">
     <picture>
       <source type="image/webp"
-              srcset="assets/img/p5-red-750.webp 750w, assets/img/p5-red-1080.webp 1080w"
+              srcset="assets/img/p5-red-v2-750.webp 750w, assets/img/p5-red-v2-1024.webp 1024w"
               sizes="100vw">
-      <img src="assets/img/p5-red-750.jpg" width="750" height="1125"
+      <img src="assets/img/p5-red-v2-750.jpg" width="750" height="1125"
            alt="金正旭与刘俊懿身着中式礼服，身旁是书法婚书立轴"
            loading="lazy" decoding="async">
     </picture>
