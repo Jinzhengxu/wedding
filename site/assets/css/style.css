@@ -33,6 +33,7 @@
   /* 满月专用的黄：比 --gold 更黄、更亮、更饱和。金线是线，月是光，
      两者本来就不该是同一个色。只用在第 6 屏的月面和光晕，别处不许用。 */
   --moon:       229,171,45;
+  --moon-dark:  #EEECE4;   /* 月亮的暗面：比纸白暗 3%，只够看出那里有一枚月亮 */
   --line:       rgba(31,42,34,.10);
 
   /* ---- 礼红半页。--red 取自 P5 底边实测色，让 contain 的接缝看不见 ---- */
@@ -81,7 +82,7 @@
   --d-fast: 180ms;
   --d-base: 280ms;
   --d-slow: 520ms;
-  --d-ring: 1600ms;   /* 月环现在要绕满整整一周，比从前多走一段，慢一档才不赶 */
+  --d-ring: 1600ms;   /* 月亮从新月圆到满月走一整轮，比一次淡入长得多，慢一档才不赶 */
   --reveal-y: 12px;
 }
 
@@ -91,7 +92,7 @@
   :root {
     --paper:#F5F3ED; --mat:#FBFAF6; --ink:#1F2A22; --ink-2:#566056;
     --moss:#2C3F31; --gold:#A9854A; --gold-soft:rgba(169,133,74,.34);
-    --moon:229,171,45; --line:rgba(31,42,34,.10);
+    --moon:229,171,45; --moon-dark:#EEECE4; --line:rgba(31,42,34,.10);
     --red:#7B0709; --red-top:#5C0203; --red-ink:#F6F1E6; --red-gold:#D9BE86;
     --red-line:rgba(217,190,134,.30); --cinnabar:#9E2B25;
   }
@@ -145,9 +146,14 @@ a { color: inherit; }
 .screen { min-height: 100vh; }
 @supports (height: 100svh) { .screen { min-height: 100svh; } }
 
-/* 金线唯一写法。禁止 height:.5px —— 低端安卓亚像素渲染下会直接消失 */
-.hair { height: 1px; background: var(--gold); opacity: .55; border: 0; margin: 0; }
-@media (-webkit-min-device-pixel-ratio: 2) { .hair { transform: scaleY(.5); } }
+/* 金线唯一写法。禁止 height:.5px —— 低端安卓亚像素渲染下会直接消失。
+   压扁用的 scaleY 走变量：金线还要被「画」出来（见 @keyframes draw-x），
+   那支动画得把这一档压扁一起带上，写死在媒体查询里就带不动了。 */
+.hair {
+  height: 1px; background: var(--gold); opacity: .55; border: 0; margin: 0;
+  --hair-y: 1; transform: scaleY(var(--hair-y));
+}
+@media (-webkit-min-device-pixel-ratio: 2) { .hair { --hair-y: .5; } }
 .hair--red { background: var(--red-gold); opacity: .6; }
 .hair--c { width: 40px; margin-inline: auto; }
 
@@ -163,6 +169,26 @@ html.js .reveal {
   transition-delay: var(--d, 0ms);
 }
 html.js .reveal.in { opacity: 1; transform: none; }
+/* .reveal 的「已经在位」变体：只借 IntersectionObserver 报的那一下时机，
+   不要它的淡入位移。譬如纸红交界那条横幅 —— 整条自己淡入的话，
+   那道红边会跟着飘一下；该动的是幅上那枚囍，不是幅本身。 */
+html.js .reveal--flat { opacity: 1; transform: none; }
+
+/* 全站共用的四支动作。都只动 opacity 和 transform —— 别的属性一律不动画。
+
+   一条通用写法：隐藏状态【只】写在 keyframes 的 from 里，配 fill:both 和延迟，
+   绝不写成静态的 opacity:0。html.lite 和 prefers-reduced-motion 下动画整个被禁，
+   那时这些元素是直接就在那儿的；写成静态隐藏的话，动画一禁它们就永远看不见。 */
+@keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+/* 金线是被【画】出来的：从中间往两头拉开。scaleY(var(--hair-y)) 必须带上，
+   2 倍屏上 .hair 本来就压着 scaleY(.5)，keyframes 里漏了它，线会在动画结束后
+   胖回 1px（fill:both 会把终态钉住）。 */
+@keyframes draw-x {
+  from { transform: scaleY(var(--hair-y)) scaleX(0); }
+  to   { transform: scaleY(var(--hair-y)) scaleX(1); }
+}
+@keyframes draw-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 /* --------------------------------------------------------------- 图片 */
 .ph { position: relative; overflow: hidden; background: var(--paper); }
@@ -244,8 +270,43 @@ html.js .ph img.ready { opacity: 1; }
   width: 1px; height: 22px; background: var(--gold);
   margin: 20px auto 0; opacity: .6;
 }
-html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite; }
 @keyframes breathe { 0%,100% { opacity: .3 } 50% { opacity: .9 } }
+
+/* --------------------------------------------------------------- 封面入场
+   整页的第一眼在这里，也是全站唯一值得排一段【次序】的地方：
+   名字一列一列站住（男左女右，左先），中间那条金线自上而下画下来，
+   下面那道短金线从中间拉开，最后是日期。全程 1.3 秒，比页面里任何一处都慢
+   —— 封面是掀开帖子的那一下，快了就没有「掀」的感觉。
+
+   发令枪是 #cover.in，JS 在封面照片解码完成时挂上（最迟 900ms 兜底）。
+   照片还是一团模糊的占位图、名字却已经演完了，那顺序是反的。
+
+   在那之前动画一律 paused —— 停在第一帧，也就是藏着。为什么不另写一份
+   opacity:0 的静态起点：那等于把起点抄两遍，抄出来的那份迟早跟 keyframes
+   走岔。paused 让起点只有一个出处。
+   （代价是 .in 必须来。所以 app.js 里那句 setTimeout 紧贴着 .motion 写，
+   中间不许插任何可能抛错的代码。） */
+html.js.motion .cover-names .col { animation: rise-in 620ms var(--e-out) 60ms both paused; }
+html.js.motion .cover-names .col:last-child { animation-delay: 200ms; }
+/* 竖线是「写」下来的，所以从上往下长 —— 从中间往两头长是横线的写法。 */
+html.js.motion .cover-names .rod {
+  transform-origin: top; animation: draw-y 520ms var(--e-out) 360ms both paused;
+}
+html.js.motion .cover-foot .hair { animation: draw-x 640ms var(--e-out) 620ms both paused; }
+html.js.motion .cover-foot .date { animation: rise-in 620ms var(--e-out) 760ms both paused; }
+html.js.motion .cover-foot .sub  { animation: rise-in 620ms var(--e-out) 860ms both paused; }
+/* 这一竖既要淡入、又要接着呼吸。两支都动 opacity，靠延迟错开：
+   呼吸从 1.5s 起，那会儿淡入早停了（同时活着的话，列表里靠后的那支说了算）。 */
+html.js.motion .cover-foot .tick {
+  animation: rise-in 520ms var(--e-out) 960ms both paused,
+             breathe 2.4s ease-in-out 1500ms infinite paused;
+}
+html.js.motion #cover.in .cover-names .col,
+html.js.motion #cover.in .cover-names .rod,
+html.js.motion #cover.in .cover-foot .hair,
+html.js.motion #cover.in .cover-foot .date,
+html.js.motion #cover.in .cover-foot .sub,
+html.js.motion #cover.in .cover-foot .tick { animation-play-state: running; }
 
 /* ==================================================== 屏 2 帖芯（心脏） */
 #tie { padding-bottom: var(--sec-gap); }
@@ -258,6 +319,10 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
   box-shadow: var(--sh-card);
   padding: 28px 22px 24px; text-align: center;
 }
+/* 卡里那两道短金线，等卡自己落位之后再从中间拉开 —— 一张请柬上，
+   线是最后画上去的那一笔。150ms 是让位给 .reveal 自己那 280ms 的淡入起头。 */
+html.js.motion .reveal.in .hair--c { animation: draw-x 640ms var(--e-out) 150ms both; }
+
 .tie-card .k { font-size: var(--fs-key); font-weight: 600; line-height: 1.7; }
 .tie-card .s { font-family: var(--f-sans); font-size: var(--fs-note); color: var(--ink-2); }
 /* 只有「中午开席」四个字撑这一栏，按 .k 的默认字距排会缩成一小坨。
@@ -363,7 +428,9 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
   position: relative; width: min(56vw, 244px); aspect-ratio: 1;
   margin: -14% auto 0; z-index: 1;
 }
-.moon-ring svg { width: 100%; height: 100%; display: block; transform: rotate(-90deg); }
+/* 不再转 -90° —— 那是给「从 12 点钟方向开始绕圈」的进度环用的。
+   现在动的是月影，转了反而把它的左右方向拧歪。 */
+.moon-ring svg { width: 100%; height: 100%; display: block; }
 /* 光晕：亮在金线外侧，往外化开，中心留给月面自己的那层淡金。
    一层渐变搞定，不用 filter —— 见 index.html 里那段注释。 */
 .moon-glow {
@@ -373,74 +440,92 @@ html.js.motion .cover-foot .tick { animation: breathe 2.4s ease-in-out infinite;
     rgba(var(--moon),.22) 36%, rgba(var(--moon),.34) 40%,   /* 金线那一圈最亮 */
     rgba(var(--moon),.13) 50%, rgba(var(--moon),0)   68%);  /* 往外化开到没有 */
 }
-/* 默认状态 = 终态：一轮满月，金线闭合、月面已亮。
+/* 默认状态 = 终态：一轮满月 —— 月影早滑出了圆外，光晕已经亮着。
    脚本挂掉 / 不支持 IntersectionObserver 的浏览器看到的就是这个，
-   而不是一个画了一半的残圈。 */
+   而不是一枚黑月亮。 */
 /* 两行 fill 不是手滑：var() 万一解析不了（老到不支持自定义属性的内核），
    SVG 的 fill 会退到默认值【黑色】，月面直接变成一枚黑饼。
    前一行是给那种浏览器的普通值，后一行才是正常路径。 */
 .moon-ring .disc {
   fill: rgba(229,171,45,.16);
   fill: rgba(var(--moon),.16);
-  transition: fill var(--d-slow) var(--e-out);
 }
-.moon-ring .track { fill: none; stroke: var(--gold-soft); stroke-width: 1; }
-.moon-ring .prog {
-  fill: none; stroke: var(--gold); stroke-width: 1.25; stroke-linecap: butt;
-  transition: stroke-dashoffset var(--d-ring) var(--e-out);
+/* 月影：跟月面一样大的一枚圆。同样大的两个圆相错，切出来的正是蛾眉月
+   那道形状 —— 月相本来的几何，不用凑。92 = 直径：滑出这么远两圆相切，月就满了。
+
+   影色不取纸白，取比纸白暗 3% 的一档。差别只有肉眼刚好够看见的那么多，
+   但缺的那半边因此还是一枚月亮（天文上这叫地照：新月的暗面也看得见轮廓），
+   而不是一圈空环 —— 空环正是这一版要甩掉的东西。 */
+.moon-ring .shade {
+  fill: #EEECE4;
+  fill: var(--moon-dark);
+  transform: translateX(-92px);
 }
-/* 脚本在跑的时候才把月退回起点：空环、暗面。289.03 = 2πr（r=46），
-   跟 HTML 里的 stroke-dasharray 是同一个数，改要两边一起改。
+/* 月轮：一条不动的金线。从前这里是两条 —— 一条底环、一条绕圈画的进度环。
+   可绕圈是进度条的语汇（加载中、完成度），月亮不描边：月亮是影子退下去、
+   脸一点点亮出来。所以金线退回它该待的地方（金只做线），
+   「变圆」整件事交给月影。 */
+.moon-ring .rim { fill: none; stroke: var(--gold); stroke-width: 1.25; }
 
-   起点必须【瞬间】就位，所以这里先把过渡关掉 —— 上面那两行给的是终态，
-   html.js 一加就是一次值变化，过渡开着的话月环会当场从满月倒着退成空环，
-   1.6 秒的倒放。等这一屏进视口，JS 挂上 .armed 把过渡装回去，再把
-   stroke-dashoffset 打成 0：金线绕满一周，随后 .full 让月面亮起，两拍。 */
-html.js .moon-ring .prog { stroke-dashoffset: 289.03; transition: none; }
-html.js .moon-ring .disc { fill: transparent; transition: none; }
-html.js .moon-ring .moon-glow { opacity: 0; transition: none; }
-html.js .moon-ring.armed .prog { transition: stroke-dashoffset var(--d-ring) var(--e-out); }
-html.js .moon-ring.armed .disc { transition: fill var(--d-slow) var(--e-out); }
-html.js .moon-ring.armed .moon-glow { transition: opacity var(--d-ring) var(--e-out); }
-html.js .moon-ring.full .disc { fill: rgba(229,171,45,.16); fill: rgba(var(--moon),.16); }
-html.js .moon-ring.full .moon-glow { opacity: 1; }
+/* 脚本在跑的时候才把月退回起点：新月（影子正盖满月面）、无晕、数字未现。
 
-/* ------------------------------------------------------- 月环跟着手指走
+   起点必须【瞬间】就位，所以这里先把过渡关掉 —— 上面几行给的是终态，
+   类名一加就是一次值变化，过渡开着的话月亮会当场从满月倒着退回新月，
+   1.6 秒的倒放。等这一屏进视口，JS 挂上 .armed 把过渡装回去，
+   再挂 .full 把三样一起放出去。
+
+   门为什么是 .motion 而不是 .js：低端安卓和 prefers-reduced-motion 走 html.lite，
+   那边 transition/animation 全禁。起点若写在 .js 下，lite 机器会卡在新月 ——
+   一枚永远不亮的黑月亮。.motion 只加在决定要动的机器上，两边都不用 JS 兜底。 */
+html.js.motion .moon-ring .shade { transform: none; transition: none; }
+html.js.motion .moon-ring .moon-glow { opacity: 0; transition: none; }
+html.js.motion .moon-ring .mid { opacity: 0; transition: none; }
+html.js.motion .moon-ring.armed .shade { transition: transform var(--d-ring) var(--e-out); }
+html.js.motion .moon-ring.armed .moon-glow { transition: opacity var(--d-ring) var(--e-out); }
+html.js.motion .moon-ring.armed .mid { transition: opacity var(--d-slow) var(--e-out) 260ms; }
+html.js.motion .moon-ring.full .shade { transform: translateX(-92px); }
+html.js.motion .moon-ring.full .moon-glow { opacity: 1; }
+html.js.motion .moon-ring.full .mid { opacity: 1; }
+
+/* ------------------------------------------------------- 月亮跟着手指圆
    view() 时间线由合成器驱动，不经过 scroll 事件 —— 这是本站「不用 scroll
    驱动动画」那条铁律唯一的合法出口：X5 惯性滑动期间 scroll 回调节流极粗，
-   而这里根本没有回调。手指往下滑，月亮从屏幕下沿升上来，一点点合拢，
-   升到屏幕正中时恰好合成满月，光晕随之涨起来 —— 停手就停在半路，
-   往回滑就往回退，全程跟着手指。
+   而这里根本没有回调。手指往下滑，月亮从纱上升上来，影子一点点退下去，
+   升到屏幕正中时恰好满 —— 停手就停在半路（就是半个月亮），往回滑就再缺回去。
+
+   时间线用【具名】的，挂在 .moon-ring 上，三支动画都读它。写成各自的 view()
+   也能跑，但那样每个元素读的是自己的取景，而月影自己正在平移 ——
+   自己的动画改自己的进度，是个回路。挂在一处，三支动画同一把尺子。
 
    进度按 cover 算（元素从下沿进、到上沿出为 0%→100%）：
-     8% → 40%   金线从空绕到满（40% 时月亮还在屏幕下半，满得早一点，
-                然后整轮满月再往上走过屏幕中央）
-     34% → 50%  月面亮起，比金线晚一点，先合拢再亮
-     32% → 56%  光晕涨起来，中途稍微涨过一点再落回，是「亮起来」那一下
+     10% → 46%  月影退出去，新月走到满月（46% 时月亮还在屏幕下半，
+                满得早一点，然后整轮满月再往上走过屏幕中央）
+     22% → 42%  环心的数字浮出来，跟着月面一起亮，像是写在月亮上的
+     30% → 58%  光晕涨起来，中途稍微涨过一点再落回，是「亮起来」那一下
 
-   不支持 view() 的浏览器（老 X5、老 Safari）走下面 JS 里那条：
+   不支持的浏览器（老 X5、老 Safari）走下面 JS 里那条：
    进视口后自己走 1.6 秒，终态一模一样。 */
 @supports (animation-timeline: view()) {
+  html.js.motion .moon-ring.scrub { view-timeline-name: --moonview; }
   /* 注意顺序：animation 简写会把 animation-timeline 重置成 auto，
      所以 animation-timeline 必须写在简写后面，写反了整段就不跑。 */
-  html.js .moon-ring.scrub .prog {
-    animation: moon-close linear both;
-    animation-timeline: view();
-    animation-range: cover 8% cover 40%;
+  html.js.motion .moon-ring.scrub .shade {
+    animation: moon-wax linear both;
+    animation-timeline: --moonview;
+    animation-range: cover 10% cover 46%;
   }
-  html.js .moon-ring.scrub .disc {
-    animation: moon-face linear both;
-    animation-timeline: view();
-    animation-range: cover 34% cover 50%;
+  html.js.motion .moon-ring.scrub .mid {
+    animation: fade-in linear both;
+    animation-timeline: --moonview;
+    animation-range: cover 22% cover 42%;
   }
-  html.js .moon-ring.scrub .moon-glow {
+  html.js.motion .moon-ring.scrub .moon-glow {
     animation: moon-halo linear both;
-    animation-timeline: view();
-    animation-range: cover 32% cover 56%;
+    animation-timeline: --moonview;
+    animation-range: cover 30% cover 58%;
   }
 }
-@keyframes moon-close { from { stroke-dashoffset: 289.03; } to { stroke-dashoffset: 0; } }
-@keyframes moon-face  { from { fill: rgba(var(--moon),0); } to { fill: rgba(var(--moon),.16); } }
+@keyframes moon-wax { from { transform: none; } to { transform: translateX(-92px); } }
 @keyframes moon-halo {
   0%   { opacity: 0; transform: scale(.9); }
   70%  { opacity: 1; transform: scale(1.05); }   /* 涨过一点 */
@@ -502,6 +587,19 @@ html.js .moon-ring.full .moon-glow { opacity: 1; }
   display: flex; align-items: center; justify-content: center;
   font-size: 1.5rem; color: var(--gold); line-height: 1;
 }
+/* 全站唯一一枚正经的囍，从前是干站着的。金线先从中间往两头拉满，
+   再把这枚章盖下去 —— 用的是回执那枚朱砂印同一条曲线（--e-seal，
+   收尾有一点点过冲），因为这两下本来就是同一个动作：盖章。
+
+   横幅本身不许动（.reveal--flat）：它半边纸白半边礼红，一动那道红边就跟着飘。 */
+html.js.motion .turn.in .ln { animation: draw-x 760ms var(--e-out) both; }
+html.js.motion .turn.in .xi { animation: seal-in 420ms var(--e-seal) 420ms both; }
+/* 这枚章本来就压着 translate(-50%,-50%) 居中，keyframes 里必须原样带上，
+   漏了它章会当场跳到右下角去。 */
+@keyframes seal-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.7); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 
 /* ============================================================ 礼红半页 */
 .red {
@@ -527,6 +625,13 @@ html.js .moon-ring.full .moon-glow { opacity: 1; }
   writing-mode: vertical-rl; text-orientation: upright;
   font-size: var(--fs-h2); letter-spacing: .3em; color: var(--red-ink); line-height: 1;
 }
+/* 四个字一个一个落下来，像题上去的。inline-block 不能改成 block ——
+   竖排里 block 的堆叠方向是横的，四个字会排成四列。 */
+.rite-vert span { display: inline-block; }
+html.js.motion .rite-vert.in span { animation: rise-in 620ms var(--e-out) both; }
+html.js.motion .rite-vert.in span:nth-child(2) { animation-delay: 110ms; }
+html.js.motion .rite-vert.in span:nth-child(3) { animation-delay: 220ms; }
+html.js.motion .rite-vert.in span:nth-child(4) { animation-delay: 330ms; }
 /* 此刻整块没人用 —— 标题「中式 · 婚书」和「中式礼服」那句都删了。
    留着是因为敬茶时段还待填，补那一行的人不该还得再写一遍样式。 */
 .rite-foot { text-align: center; margin-top: 26px; }

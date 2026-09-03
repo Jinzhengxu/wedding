@@ -184,14 +184,18 @@
 
 
 <!-- ======================================================= 屏 6 · 月相倒计时
-     金环从空到满绕一周，随后月面亮起 —— 划到这一屏就当场演一遍。
-     从前这一圈画的是「一年走到今天」的进度，只有婚礼当天才闭合成满月，
+     月亮从纱上升起来，一点点圆 —— 划到这一屏就当着谁的面圆一次。
+     从前这一圈是「金环绕一周」：那是进度条的动作（加载中、完成度），不是月亮的。
+     月亮不描边 —— 月亮是影子退下去、脸一点点亮出来。所以金线退回去只做一枚
+     不动的月轮，动的是月影：一枚同样大的纸色圆从月面上向左滑出去，
+     蛾眉、凸月、满月，是月相本来的次序。
+     从前这一圈画的还是「一年走到今天」的进度，只有婚礼当天才闭合成满月，
      可那天没人会专门打开请柬来看，等于这个设计谁也看不见。
      现在满月是给每一个划到这里的人看的；剩几天由环心的数字说。
 
-     stroke-dashoffset 的默认值写 0（= 满月）是有意的：脚本挂掉、
-     IntersectionObserver 不支持，静态页上也是一轮完整的满月，
-     不会停在一个残缺的圈上。空环那个起点只写在 CSS 的 html.js 下。 -->
+     月影默认停在圆外（= 满月）是有意的：脚本挂掉、IntersectionObserver
+     不支持，静态页上也是一轮完整的满月，不会停在一枚残月上。
+     新月那个起点只写在 CSS 的 html.js.motion 下。 -->
 <section id="moon">
   <div class="moon-band">
     <!-- P4 第二次出现，同一文件同一档，浏览器缓存命中，零额外字节。
@@ -210,10 +214,17 @@
          头号来源，而这一层只动 opacity 和 transform，两样都在合成器上跑。 -->
     <div class="moon-glow" aria-hidden="true"></div>
     <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
-      <circle class="disc" cx="50" cy="50" r="46"/>
-      <circle class="track" cx="50" cy="50" r="46"/>
-      <circle class="prog" id="ringProg" cx="50" cy="50" r="46"
-              stroke-dasharray="289.03" stroke-dashoffset="0"/>
+      <!-- 月影裁在月面里，一步也迈不出月轮 —— 不裁的话它往左滑出去时会压在
+           上面那张头纱照片上，一道纸色的圆边横穿照片，一眼就穿帮。 -->
+      <defs>
+        <clipPath id="moonClip"><circle cx="50" cy="50" r="46"/></clipPath>
+      </defs>
+      <g clip-path="url(#moonClip)">
+        <circle class="disc" cx="50" cy="50" r="46"/>
+        <circle class="shade" id="ringShade" cx="50" cy="50" r="46"/>
+      </g>
+      <!-- 月轮：一条从头到尾都在的金线。金只做线，动的是线里面的光。 -->
+      <circle class="rim" cx="50" cy="50" r="46"/>
     </svg>
     <div class="mid" id="ringMid" aria-hidden="true">
       <span class="num lat tnum" id="cdNum"></span>
@@ -261,7 +272,7 @@
 <!-- ==================================================== 翻页记号
      一条金线，正中坐一枚「囍」，上半在纸白里、下半在礼红里。
      从这里往下，最后一眼都是红。 -->
-<div class="turn" aria-hidden="true">
+<div class="turn reveal reveal--flat" aria-hidden="true">
   <div class="hair ln"></div>
   <div class="xi">囍</div>
 </div>
@@ -280,7 +291,9 @@
            loading="lazy" decoding="async">
     </picture>
   </div>
-  <div class="rite-vert reveal" aria-hidden="true">花好月圆</div>
+  <!-- 拆成四个 span 是为了一个字一个字落下来（见 style.css .rite-vert span）。
+       aria-hidden 的装饰字，拆开不影响读屏；也不影响字体子集（拆的是标签不是字）。 -->
+  <div class="rite-vert reveal reveal--flat" aria-hidden="true"><span>花</span><span>好</span><span>月</span><span>圆</span></div>
   <!-- 原来这里有个标题「中式 · 婚书」，删了：这一屏跟封面、帖芯、月相一样
        不设标题，照片自己说得清，多一行标题反而像在给照片加注解。
        ▼ 待填：中式敬茶环节的时段。知道了就把下面这块放出来 ——
@@ -386,17 +399,19 @@
 
 <!-- ==================================================== 屏 11 · 落款 -->
 <footer id="foot" class="red">
-  <div class="hair hair--red hair--c" style="width:56px" aria-hidden="true"></div>
+  <!-- 落款这几行从前是全站唯一没有入场的 —— 前面每一屏都是浮上来的，
+       到最后一眼反而是「本来就在那儿」，读下来会突然一顿。 -->
+  <div class="hair hair--red hair--c reveal" style="width:56px" aria-hidden="true"></div>
   <!-- 落款两行连着走，中间不插日期 —— 「谁请的」是一件事，
        日期地点是另一件事，被隔开就不像一份落款了。 -->
-  <p class="sign">金正旭　刘俊懿　敬邀</p>
+  <p class="sign reveal">金正旭　刘俊懿　敬邀</p>
   <!-- ▼ 待填：女方双亲的名字。拿到后写成
        「金宪举　刘建伟　　刘××　×××　夫妇　谨订」，两组之间空两格。
        现在只落男方，是因为这一版按男方发帖办；两家合发就得把女方补齐。 -->
-  <p class="fam">刘树亮　李萍　夫妇　谨订</p>
-  <p class="meta">二〇二六年九月十二日　·　山东蒙阴</p>
-  <p class="last">恭候诸亲光临</p>
-  <div class="hair hair--red hair--c" style="width:20px;margin-top:30px" aria-hidden="true"></div>
+  <p class="fam reveal">刘树亮　李萍　夫妇　谨订</p>
+  <p class="meta reveal">二〇二六年九月十二日　·　山东蒙阴</p>
+  <p class="last reveal">恭候诸亲光临</p>
+  <div class="hair hair--red hair--c reveal" style="width:20px;margin-top:30px" aria-hidden="true"></div>
   <p class="credit">背景音乐 Air on the G String（BWV 1068）<br>
      Air Force Strings, United States Air Force Band · 公有领域</p>
 </footer>

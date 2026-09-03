@@ -43,6 +43,19 @@
 
   html.classList.add(lite ? 'lite' : 'motion');
 
+  // ------------------------------------------------------------ 封面入场
+  // 名字、金线、日期按次序出现（次序全在 style.css 里，见 #cover.in）。
+  // 这里只负责发令：封面照片解码完就开演 —— 照片还是一团模糊的占位图、
+  // 名字却已经演完了，那顺序是反的。900ms 是兜底：网慢的时候照片要好几秒，
+  // 而封面上一直没有名字，比没有入场糟得多。两条谁先到算谁。
+  //
+  // 这几行【必须】紧贴着上面那句 .motion：在 .in 挂上之前，封面那几行字是靠
+  // animation-play-state: paused 停在第一帧的（= 藏着）。中间一旦插进什么
+  // 抛了错，setTimeout 就排不上，封面会永远没有名字。排在这里，谁也挡不住它。
+  var cover = doc.getElementById('cover');
+  var coverIn = function () { if (cover) cover.classList.add('in'); };
+  if (lite) coverIn(); else setTimeout(coverIn, 900);
+
   var store = {
     get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -80,6 +93,7 @@
       img.classList.add('ready');
       var box = img.closest('.ph');
       if (box) box.style.backgroundImage = 'none';
+      if (cover && cover.contains(img)) coverIn();
     };
     if (img.complete && img.naturalWidth) { done(); return; }
     if (img.decode) { img.decode().then(done).catch(done); }
@@ -114,7 +128,7 @@
   var DAY_START = new Date(YMD + 'T00:00:00+08:00').getTime();
   var DAY_END   = DAY_START + 86400000;
 
-  var ring = $('#ring'), prog = $('#ringProg');
+  var ring = $('#ring'), shade = $('#ringShade');
   var cdNum = $('#cdNum'), cdUnit = $('#cdUnit'), cdMid = $('#ringMid');
 
   function digits(n) {
@@ -161,49 +175,44 @@
     });
   }
 
-  // 月环。从前它画的是「一年走到今天」的进度，只有婚礼当天才闭合成满月 ——
+  // 月亮。从前这一圈画的是「一年走到今天」的进度，只有婚礼当天才闭合成满月 ——
   // 而那天没人会专门打开请柬来看，等于这个设计谁也看不见。现在改成：
-  // 谁划到这一屏，月亮就当着谁的面合上，而且是【跟着手指】合的。
-  // 环不再承载「还剩多久」的信息了 —— 那件事环心的数字一直在说，说得比环准。
+  // 谁划到这一屏，月亮就当着谁的面圆一次，而且是【跟着手指】圆的。
+  // 圆的方式也换了：从前是金环绕一周（进度条的动作），现在是月影退下去
+  // （月亮的动作）。环不承载「还剩多久」——那件事环心的数字一直在说，说得比环准。
   //
   // 两条路，能力判定选一条，选定之后另一条一步都不走：
-  //   scrub  支持 animation-timeline: view() —— 整段交给 CSS，滑多少合多少，
-  //          停手就停住，往回滑就往回退。合成器驱动，没有一个 scroll 回调。
+  //   scrub  支持具名 view() 时间线 —— 整段交给 CSS，滑多少圆多少，
+  //          停手就停住，往回滑就再缺回去。合成器驱动，没有一个 scroll 回调。
   //   timed  老浏览器 —— 进视口后自己走 1.6 秒。终态跟 scrub 一模一样。
-  var RING_MS = 1600;   // 跟 style.css 的 --d-ring 一致；只是 transitionend 的兜底，差几十毫秒无妨
-  if (prog) {
-    var lit = function () { if (ring) ring.classList.add('full'); };
+  //
+  // 没有第三条：html.lite（低端安卓 / prefers-reduced-motion）压根没有起点，
+  // 静态终态就是满月，这里一行都不必管（见 style.css 里 .motion 那道门）。
+  if (shade && ring && !lite) {
     var close = function () {
-      // .armed 才把过渡装回去（见 style.css）。装完等一帧再改值，
-      // 让空环这个起点先落定 —— 同一帧里又装过渡又改值，老 WebKit 上会漏掉动画。
+      // .armed 才把过渡装回去（见 style.css）。装完等一帧再挂 .full，
+      // 让新月这个起点先落定 —— 同一帧里又装过渡又改值，老 WebKit 上会漏掉动画。
       ring.classList.add('armed');
-      var go = function () {
-        prog.style.strokeDashoffset = '0';
-        // 先合线、后亮面，两拍。transitionend 在后台标签页里可能永远不来，加兜底。
-        var t = setTimeout(lit, RING_MS + 120);
-        prog.addEventListener('transitionend', function once(e) {
-          if (e.propertyName !== 'stroke-dashoffset') return;
-          prog.removeEventListener('transitionend', once);
-          clearTimeout(t);
-          lit();
-        });
-      };
+      var go = function () { ring.classList.add('full'); };
       if (window.requestAnimationFrame) requestAnimationFrame(go); else setTimeout(go, 32);
     };
     var scrub = false;
     try {
-      scrub = !lite && !!(window.CSS && CSS.supports && CSS.supports('animation-timeline', 'view()'));
+      // 两个都要问：万一有内核支持 view() 却不认具名时间线，
+      // animation-timeline: --moonview 会解析成一条不存在的时间线，
+      // 动画就停在 from 那一帧 —— 一枚永远不亮的黑月亮。
+      scrub = !!(window.CSS && CSS.supports &&
+                 CSS.supports('animation-timeline', 'view()') &&
+                 CSS.supports('view-timeline-name', '--moonview'));
     } catch (e) {}
 
-    // 降级路径：html.lite 把 transition 全禁了，这里设值即到位，直接就是满月。
-    if (lite) { prog.style.strokeDashoffset = '0'; lit(); }
-    else if (scrub) { ring.classList.add('scrub'); }   // 剩下的全在 style.css 里，JS 不再插手
+    if (scrub) { ring.classList.add('scrub'); }   // 剩下的全在 style.css 里，JS 不再插手
     else if ('IntersectionObserver' in window) {
       var ro = new IntersectionObserver(function (es) {
         es.forEach(function (e) { if (e.isIntersecting) { ro.unobserve(e.target); close(); } });
       }, { threshold: 0.4 });
       ro.observe(ring);
-    } else { prog.style.strokeDashoffset = '0'; lit(); }
+    } else { ring.classList.add('full'); }
   }
 
   // ------------------------------------------------------------ 平滑滚动
