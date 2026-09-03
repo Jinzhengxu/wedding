@@ -418,14 +418,26 @@ html.js.motion .reveal.in .hair--c { animation: draw-x 640ms var(--e-out) 150ms 
 #moon { margin-top: var(--sec-gap); text-align: center; }
 .moon-band { position: relative; }
 .moon-band .ph { aspect-ratio: 16 / 9; }
-.moon-band .ph img { object-position: 50% 92%; }   /* P4 第二次裁切：铺地的长头纱 */
-/* 92% 是量着照片定的：v2 的头纱铺在草地上，裙摆最低处落在 85% 上下。
-   往上退到 78% 就把新郎的皮鞋和裤脚一起框进来了 —— 那不是「月亮挂在纱上」，
-   那是把人拦腰截断。往下顶到 100% 皮鞋又从上沿回来了，92% 是唯一只剩纱和草的那一档。 */
+.moon-band .ph img { object-position: 50% 0; }   /* P4 第二次裁切：顶上那道花拱门 */
+/* 钉在最上沿，这条带子只要拱、花和树影，不要人。
+
+   从前这里裁的是下半张（铺地的头纱）。换了 v2 之后那一档裁出来是一截没有头的
+   身子：裙摆、裤脚、皮鞋，再被下面那层纸色渐变洗淡。背景是半个人的时候，
+   看的人第一反应不是「月亮升起来了」，是「这张照片裁坏了」。
+   往下挪一点更糟：12% 上下新娘的头顶正好从月亮后面冒出来，半张被挡住的脸。
+
+   0 这一档剩下的是拱门：尖拱的两道线自己往中间收，收口处就是月亮。
+   16:9 的窗口取原图上沿 37.4%，两人的发顶在原图 33% 处 —— 也就是落在
+   带子高度的 88%，仍然在框里。真正把人挡掉的是下面那道纸色渐变
+   （84% 就已经是纯纸色，见 ::after），不是这一行。两个数字是一起定的：
+   动了 aspect-ratio 或者渐变的收口，就要回来重量一遍发顶落在百分之几。 */
+/* 照片往纸里化开。收口提前到 84%：带子下缘 88% 那一段是两人的发顶，
+   洗到 100% 才纯纸色的话，那里会留一团看得出是脑袋的浅影。
+   提前收口还多出一个好处 —— 月亮是从这片纸色里升上来的，不是贴在照片上。 */
 .moon-band::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(to bottom,
-    rgba(245,243,237,0) 0%, rgba(245,243,237,.74) 58%, var(--paper) 100%);
+    rgba(245,243,237,0) 0%, rgba(245,243,237,.72) 52%, var(--paper) 84%);
 }
 .moon-ring {
   position: relative; width: min(56vw, 244px); aspect-ratio: 1;
