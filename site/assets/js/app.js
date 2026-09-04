@@ -261,11 +261,19 @@
   });
 
   // ------------------------------------------------------------ 音乐
-  // 微信会拦截自动播放。绝不在 load 时调 play() —— 失败的 play() 在部分 X5 上
-  // 会打控制台错误并触发一次布局。只在用户点击后才 load + play。
+  // 想要的是"点开就有声"。可除了微信，没有一个浏览器允许带声音的自动播放，
+  // 所以三条路一起铺，谁先成算谁：
+  //   1. 微信：等 WeixinJSBridgeReady，X5 在这之后放行 play() —— 只有这条
+  //      是真正的"打开即响"，而来客九成在微信里；
+  //   2. 别的浏览器：照样先试一次。Chrome 对访问过的站点会放行（媒体互动
+  //      分），成了就是白赚；没成 catch 掉，不弹窗不留红；
+  //   3. 兜底：第一次碰页面（抬指/点击/按键）就补播。滑一下就响，感觉上
+  //      仍然是"一进来就有"。
+  // 用户手动按过那个按钮之后，第 3 条立刻拆掉 —— 否则他按下暂停、手指一
+  // 滑音乐又回来了。按钮上发出的手势也一律不算，那是它自己的事。
   var audio = $('#bgm'), mBtn = $('#musicBtn'), nudge = $('#nudge');
   if (audio && mBtn) {
-    var playing = false, fade = null;
+    var playing = false, fade = null, loaded = false, hidPaused = false;
 
     function icon() {
       mBtn.textContent = '';
@@ -290,29 +298,75 @@
       }, 50);
     }
 
-    mBtn.addEventListener('click', function () {
-      if (playing) { audio.pause(); playing = false; icon(); return; }
-      audio.load();
-      var pr = audio.play();
+    function killNudge() {
+      if (!nudge) return;
+      nudge.classList.remove('on');
+      if (nudge.parentNode) nudge.parentNode.removeChild(nudge);
+      nudge = null;
+    }
+
+    // 唯一的播放入口。onFail 只在自动播放被拦时用来把兜底手势重新挂回去。
+    function start(onFail) {
+      if (playing) return;
+      hidPaused = false;
+      if (!loaded) { loaded = true; try { audio.load(); } catch (e) {} }
+      function ok() { playing = true; icon(); fadeIn(); killNudge(); store.set('bgm_hint', '1'); }
+      var pr;
+      try { pr = audio.play(); } catch (e) { if (onFail) onFail(); return; }
       if (pr && pr.then) {
-        pr.then(function () { playing = true; icon(); fadeIn(); })
-          .catch(function () { playing = false; icon(); });   // 静默失败，不弹窗
-      } else { playing = true; icon(); fadeIn(); }
-      if (nudge) nudge.classList.remove('on');
+        pr.then(ok).catch(function () {
+          playing = false; icon();      // 静默失败，不弹窗
+          if (onFail) onFail();
+        });
+      } else { ok(); }
+    }
+
+    // 兜底手势。只挑不阻塞滚动的那几个（touchstart 会拖累低端安卓的滑动），
+    // 抬指同样算用户激活，滑一下就够了。
+    var GEST = ['touchend', 'pointerup', 'click', 'keydown'];
+    function onGesture(ev) {
+      if (ev && ev.target && mBtn.contains(ev.target)) return;   // 按钮上的手势归按钮管
+      disarm();
+      // 一次抬指会连着发 pointerup 和 click。播成了无所谓（playing 挡着），
+      // 播不成就得等这一串放完再挂回去，否则一下敲三次 play()，控制台三条红。
+      start(function () { setTimeout(arm, 400); });
+    }
+    function arm() { GEST.forEach(function (t) { doc.addEventListener(t, onGesture, false); }); }
+    function disarm() { GEST.forEach(function (t) { doc.removeEventListener(t, onGesture, false); }); }
+
+    mBtn.addEventListener('click', function () {
+      disarm();                                   // 从此音乐归他管
+      if (playing) { audio.pause(); playing = false; icon(); killNudge(); store.set('bgm_hint', '1'); return; }
+      start();
+      killNudge();
       store.set('bgm_hint', '1');
     });
 
     audio.addEventListener('pause', function () { if (playing) { playing = false; icon(); } });
     doc.addEventListener('visibilitychange', function () {
-      if (doc.hidden && playing) { audio.pause(); }   // 切后台自动暂停，保留进度
+      if (doc.hidden) {
+        if (playing) { audio.pause(); hidPaused = true; }   // 切后台自动暂停，保留进度
+      } else if (hidPaused) {
+        start();                                            // 切回来接着放
+      }
     });
+
+    if (/MicroMessenger/i.test(navigator.userAgent)) {
+      if (window.WeixinJSBridge && window.WeixinJSBridge.invoke) start(arm);
+      else doc.addEventListener('WeixinJSBridgeReady', function () { start(arm); }, false);
+      arm();                                                // 桥迟迟不来也有兜底
+    } else {
+      start(arm);
+    }
 
     if (nudge && !store.get('bgm_hint')) {
       setTimeout(function () {
+        if (playing || !nudge) return;                      // 已经响了就不用招手
         nudge.classList.add('on');
         setTimeout(function () {
+          if (!nudge) return;
           nudge.classList.remove('on');
-          setTimeout(function () { if (nudge.parentNode) nudge.parentNode.removeChild(nudge); }, 400);
+          setTimeout(killNudge, 400);
         }, 4500);
       }, 1400);
     }
